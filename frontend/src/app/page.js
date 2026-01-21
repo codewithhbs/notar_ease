@@ -32,6 +32,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import DemoMeetingModel from '../components/DemoMeetingModel/DemoMeetingModel';
 
 const testimonials = [
   {
@@ -68,19 +69,20 @@ const testimonials = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState(null);
+  const [openDemo, setOpenDemo] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => 
+    setCurrentIndex((prev) =>
       prev + 2 >= testimonials.length ? 0 : prev + 2
     );
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => 
+    setCurrentIndex((prev) =>
       prev === 0 ? testimonials.length - 2 : prev - 2
     );
   };
@@ -105,127 +107,127 @@ export default function Home() {
   return (
     <>
       <section className="relative overflow-hidden bg-linear-to-br from-indigo-50 via-white to-blue-50">
-      {/* Background Decorative Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl">
-          <div className="w-full h-96 bg-gradient-conic from-indigo-200 via-transparent to-blue-200 opacity-20 rounded-full blur-3xl"></div>
-        </div>
-      </div>
-
-      <div className="relative container mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28">
-        <div className="text-center">
-          {/* Supreme Court Trust Badge - Premium */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-3 px-7 py-4 bg-linear-to-r from-emerald-500 to-green-700 text-white rounded-full text-sm md:text-base font-bold shadow-xl shadow-green-500/30 mb-8"
-          >
-            <Shield className="w-6 h-6" />
-            Supreme Court of India + All High Courts Approved
-            <CheckCircle2 className="w-6 h-6 ml-2" />
-          </motion.div>
-
-          {/* Main Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl mx-auto"
-          >
-            Get Documents Notarized Online
-            <br />
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 via-purple-600 to-blue-700">
-              From Anywhere in the World
-            </span>
-            <br />
-            <span className="text-3xl md:text-4xl lg:text-5xl text-indigo-700">
-              in Just 15 Minutes
-            </span>
-          </motion.h1>
-
-          {/* Subheadline */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="mt-8 text-lg md:text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-medium"
-          >
-            Affidavits • Power of Attorney • Agreements • Property Documents
-            <br className="hidden md:block" />
-            100% Legally Valid • Accepted by All Courts, Embassies & Government Offices
-          </motion.p>
-
-          {/* Trust Highlights - Floating Cards */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {[
-              { icon: Video, text: "Live Video Call", color: "from-pink-500 to-rose-500" },
-              { icon: Globe, text: "Works from USA, UK, Dubai", color: "from-blue-500 to-cyan-500" },
-              { icon: Clock, text: "15-30 Min Process", color: "from-purple-500 to-indigo-500" },
-              { icon: Shield, text: "256-bit Encrypted", color: "from-green-500 to-emerald-600" },
-            ].map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + idx * 0.1 }}
-                className="group"
-              >
-                <div className={`p-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-linear-to-br ${item.color} p-3 shadow-md`}>
-                    <item.icon className="w-full h-full text-white" />
-                  </div>
-                  <p className="text-sm md:text-base font-semibold text-gray-800">{item.text}</p>
-                </div>
-              </motion.div>
-            ))}
+        {/* Background Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl">
+            <div className="w-full h-96 bg-gradient-conic from-indigo-200 via-transparent to-blue-200 opacity-20 rounded-full blur-3xl"></div>
           </div>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.6 }}
-            className="mt-16 flex flex-col sm:flex-row gap-5 justify-center items-center"
-          >
-            <button className="group relative px-10 py-5 bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-indigo-600/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden">
-              <span className="relative z-10">Book Appointment</span>
-              <ArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition" />
-              <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
-            </button>
-
-            <button className="px-10 py-5 border-2 border-indigo-600 text-indigo-700 font-bold text-lg rounded-full hover:bg-indigo-50 transition flex items-center gap-3 backdrop-blur-sm">
-              <Headphones className="w-6 h-6" />
-              Talk to Support (24×7)
-            </button>
-          </motion.div>
-
-          {/* Mini Trust Bar */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="mt-12 flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600"
-          >
-            <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> Used by 50,000+ Indians Worldwide</span>
-            <span className="hidden md:inline">•</span>
-            <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> 4.9/5 from 8,200+ Reviews</span>
-            <span className="hidden md:inline">•</span>
-            <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> ISO 27001 Certified</span>
-          </motion.div>
         </div>
-      </div>
 
-      {/* Bottom Wave */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 0L60 10L120 30L180 40L240 50L300 40L360 30L420 20L480 30L540 40L600 50L660 40L720 20L780 10L840 20L900 40L960 50L1020 40L1080 20L1140 10L1200 20L1260 40L1320 50L1380 40L1440 20V120H0V0Z" 
-                fill="white" opacity="0.8"/>
-        </svg>
-      </div>
-    </section>
+        <div className="relative container mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+          <div className="text-center">
+            {/* Supreme Court Trust Badge - Premium */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-3 px-7 py-4 bg-linear-to-r from-emerald-500 to-green-700 text-white rounded-full text-sm md:text-base font-bold shadow-xl shadow-green-500/30 mb-8"
+            >
+              <Shield className="w-6 h-6" />
+              Supreme Court of India + All High Courts Approved
+              <CheckCircle2 className="w-6 h-6 ml-2" />
+            </motion.div>
+
+            {/* Main Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl mx-auto"
+            >
+              Get Documents Notarized Online
+              <br />
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 via-purple-600 to-blue-700">
+                From Anywhere in the World
+              </span>
+              <br />
+              <span className="text-3xl md:text-4xl lg:text-5xl text-indigo-700">
+                in Just 15 Minutes
+              </span>
+            </motion.h1>
+
+            {/* Subheadline */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+              className="mt-8 text-lg md:text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-medium"
+            >
+              Affidavits • Power of Attorney • Agreements • Property Documents
+              <br className="hidden md:block" />
+              100% Legally Valid • Accepted by All Courts, Embassies & Government Offices
+            </motion.p>
+
+            {/* Trust Highlights - Floating Cards */}
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              {[
+                { icon: Video, text: "Live Video Call", color: "from-pink-500 to-rose-500" },
+                { icon: Globe, text: "Works from USA, UK, Dubai", color: "from-blue-500 to-cyan-500" },
+                { icon: Clock, text: "15-30 Min Process", color: "from-purple-500 to-indigo-500" },
+                { icon: Shield, text: "256-bit Encrypted", color: "from-green-500 to-emerald-600" },
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 + idx * 0.1 }}
+                  className="group"
+                >
+                  <div className={`p-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
+                    <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-linear-to-br ${item.color} p-3 shadow-md`}>
+                      <item.icon className="w-full h-full text-white" />
+                    </div>
+                    <p className="text-sm md:text-base font-semibold text-gray-800">{item.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+              className="mt-16 flex flex-col sm:flex-row gap-5 justify-center items-center"
+            >
+              <button onClick={() => setOpenDemo(true)} className="group relative px-10 py-5 bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-indigo-600/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+                <span className="relative z-10">Book Appointment</span>
+                <ArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition" />
+                <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+              </button>
+
+              <button className="px-10 py-5 border-2 border-indigo-600 text-indigo-700 font-bold text-lg rounded-full hover:bg-indigo-50 transition flex items-center gap-3 backdrop-blur-sm">
+                <Headphones className="w-6 h-6" />
+                Talk to Support (24×7)
+              </button>
+            </motion.div>
+
+            {/* Mini Trust Bar */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+              className="mt-12 flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600"
+            >
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> Used by 50,000+ Indians Worldwide</span>
+              <span className="hidden md:inline">•</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> 4.9/5 from 8,200+ Reviews</span>
+              <span className="hidden md:inline">•</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /> ISO 27001 Certified</span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Bottom Wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0L60 10L120 30L180 40L240 50L300 40L360 30L420 20L480 30L540 40L600 50L660 40L720 20L780 10L840 20L900 40L960 50L1020 40L1080 20L1140 10L1200 20L1260 40L1320 50L1380 40L1440 20V120H0V0Z"
+              fill="white" opacity="0.8" />
+          </svg>
+        </div>
+      </section>
 
       {/* Why Omm Documentation */}
       <section className="relative py-20 bg-linear-to-b from-indigo-50 to-white">
@@ -777,9 +779,8 @@ export default function Home() {
               >
                 {faq.q}
                 <ChevronDown
-                  className={`w-6 h-6 transition ${
-                    openFaq === i ? "rotate-180" : ""
-                  }`}
+                  className={`w-6 h-6 transition ${openFaq === i ? "rotate-180" : ""
+                    }`}
                 />
               </button>
               {openFaq === i && (
@@ -794,125 +795,124 @@ export default function Home() {
 
       {/* Client Reviews / Testimonials */}
       <motion.section
-      id="testimonials"
-      className="relative py-24 bg-linear-to-b from-indigo-50 via-white to-white overflow-hidden"
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8 }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      <div className="container mx-auto px-6">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <span className="inline-flex items-center rounded-full bg-indigo-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-indigo-700">
-            Trusted by Thousands
-          </span>
-          <h2 className="mt-4 text-4xl md:text-5xl font-bold text-gray-900">
-            What Our Users Say
-          </h2>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Join thousands of Indians who’ve simplified notarization with secure, instant online e-signing.
-          </p>
-        </div>
-
-        {/* Testimonials Grid + Carousel */}
-        <div className="relative max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-            <AnimatePresence mode="wait">
-              {visibleTestimonials.map((testimonial, idx) => (
-                <motion.div
-                  key={`${currentIndex}-${idx}`}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-shadow duration-300"
-                >
-                  <div className="flex items-center gap-4 mb-6">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-16 h-16 rounded-full object-cover ring-4 ring-indigo-100"
-                    />
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{testimonial.name}</h3>
-                      <p className="text-sm text-indigo-600 font-medium">{testimonial.role}</p>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <span className="absolute -left-3 -top-4 text-6xl text-indigo-200 select-none">“</span>
-                    <p className="text-gray-700 text-lg leading-relaxed pl-8 pr-4 italic">
-                      {testimonial.review}
-                    </p>
-                    <span className="absolute -bottom-8 right-4 text-6xl text-indigo-200 select-none">”</span>
-                  </div>
-
-                  <div className="mt-10 flex items-center justify-between">
-                    <div className="flex gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} className="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 24 24">
-                          <path d="M12 .587l3.668 7.568L24 9.748l-6 5.848 1.416 8.268L12 18.896l-7.416 4.968L6 15.596 0 9.748l8.332-1.593z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                      Verified User
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {/* Navigation Controls */}
-          <div className="flex justify-center items-center gap-4 mt-12">
-            <button
-              onClick={prevSlide}
-              className="p-3 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition"
-              aria-label="Previous"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
-            </button>
-
-            {/* Dots Indicator */}
-            <div className="flex gap-2">
-              {Array(Math.ceil(testimonials.length / 2))
-                .fill(0)
-                .map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentIndex(idx * 2)}
-                    className={`transition-all duration-300 rounded-full ${
-                      Math.floor(currentIndex / 2) === idx
-                        ? "w-10 h-3 bg-indigo-600"
-                        : "w-3 h-3 bg-gray-300 hover:bg-gray-400"
-                    }`}
-                  />
-                ))}
-            </div>
-
-            <button
-              onClick={nextSlide}
-              className="p-3 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition"
-              aria-label="Next"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-700" />
-            </button>
-          </div>
-
-          {/* Auto-play indicator */}
-          <div className="text-center mt-6">
-            <p className="text-sm text-gray-500">
-              {isPaused ? "⏸ Paused" : "▶ Auto-playing"} • Changes every 6 seconds
+        id="testimonials"
+        className="relative py-24 bg-linear-to-b from-indigo-50 via-white to-white overflow-hidden"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        <div className="container mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center rounded-full bg-indigo-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-indigo-700">
+              Trusted by Thousands
+            </span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-bold text-gray-900">
+              What Our Users Say
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+              Join thousands of Indians who’ve simplified notarization with secure, instant online e-signing.
             </p>
           </div>
+
+          {/* Testimonials Grid + Carousel */}
+          <div className="relative max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+              <AnimatePresence mode="wait">
+                {visibleTestimonials.map((testimonial, idx) => (
+                  <motion.div
+                    key={`${currentIndex}-${idx}`}
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-shadow duration-300"
+                  >
+                    <div className="flex items-center gap-4 mb-6">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-16 h-16 rounded-full object-cover ring-4 ring-indigo-100"
+                      />
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">{testimonial.name}</h3>
+                        <p className="text-sm text-indigo-600 font-medium">{testimonial.role}</p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute -left-3 -top-4 text-6xl text-indigo-200 select-none">“</span>
+                      <p className="text-gray-700 text-lg leading-relaxed pl-8 pr-4 italic">
+                        {testimonial.review}
+                      </p>
+                      <span className="absolute -bottom-8 right-4 text-6xl text-indigo-200 select-none">”</span>
+                    </div>
+
+                    <div className="mt-10 flex items-center justify-between">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <svg key={i} className="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 .587l3.668 7.568L24 9.748l-6 5.848 1.416 8.268L12 18.896l-7.416 4.968L6 15.596 0 9.748l8.332-1.593z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" /></svg>
+                        Verified User
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Navigation Controls */}
+            <div className="flex justify-center items-center gap-4 mt-12">
+              <button
+                onClick={prevSlide}
+                className="p-3 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-700" />
+              </button>
+
+              {/* Dots Indicator */}
+              <div className="flex gap-2">
+                {Array(Math.ceil(testimonials.length / 2))
+                  .fill(0)
+                  .map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentIndex(idx * 2)}
+                      className={`transition-all duration-300 rounded-full ${Math.floor(currentIndex / 2) === idx
+                          ? "w-10 h-3 bg-indigo-600"
+                          : "w-3 h-3 bg-gray-300 hover:bg-gray-400"
+                        }`}
+                    />
+                  ))}
+              </div>
+
+              <button
+                onClick={nextSlide}
+                className="p-3 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-6 h-6 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Auto-play indicator */}
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-500">
+                {isPaused ? "⏸ Paused" : "▶ Auto-playing"} • Changes every 6 seconds
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </motion.section>
+      </motion.section>
 
       {/* Final CTA */}
       <section className="py-24 bg-linear-to-r from-indigo-600 to-blue-800 text-white">
@@ -923,11 +923,12 @@ export default function Home() {
           <p className="text-xl mb-12 opacity-90">
             Join 10,000+ satisfied users • Available 24×7 • Instant slots
           </p>
-          <button className="px-10 py-3 bg-white text-indigo-600 font-bold text-xl rounded-full hover:scale-110 transition shadow-2xl transform">
+          <button onClick={() => setOpenDemo(true)} className="px-10 py-3 bg-white text-indigo-600 font-bold text-xl rounded-full hover:scale-110 transition shadow-2xl transform">
             Book Your Slot Now <ArrowRight className="inline ml-3" />
           </button>
         </div>
       </section>
+      {openDemo && <DemoMeetingModel onClose={() => setOpenDemo(false)} />}
     </>
   );
 }

@@ -55,7 +55,7 @@ router.post("/create-payment/:meetingId", authenticateAccessToken, meetingContro
 router.post("/check-status", meetingController.checkStatus);
 router.put("/update-time-slot/:id", authenticateAccessToken, meetingController.updateTimeSlot);
 router.get("/join-meeting/:id", meetingController.joinMeeting);
-router.get("/get-all-meetings", meetingController.getMeetingByUserAndAdvocate);
+router.get("/get-all-meetings", authenticateAccessToken, meetingController.getMeetingByUserAndAdvocate);
 router.get("/get-meeting/:id", meetingController.getMeetingDetails);
 router.put("/upload-doc-of-signer/:id", authenticateAccessToken, upload.single("doc"), meetingController.uploadDocOfSigner);
 router.put("/upload-face-image-of-signer/:id", authenticateAccessToken, upload.single("faceImage"), meetingController.uploadFaceImage);

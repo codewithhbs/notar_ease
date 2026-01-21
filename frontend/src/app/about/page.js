@@ -135,7 +135,7 @@ export default function Page() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 bg-gray-50">
+      {/* <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
             Meet Our Leadership
@@ -164,7 +164,6 @@ export default function Page() {
                 className="bg-white rounded-2xl shadow-xl overflow-hidden"
               >
                 <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-64" />{" "}
-                {/* Placeholder for photo */}
                 <div className="p-8 text-center">
                   <h3 className="text-2xl font-bold">{member.name}</h3>
                   <p className="text-indigo-600 font-semibold mt-2">
@@ -176,7 +175,7 @@ export default function Page() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Trust & Stats */}
       <section className="py-20 bg-indigo-600 text-white">

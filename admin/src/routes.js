@@ -5,6 +5,10 @@ import AddAdvocate from './views/Advocate/AddAdvocate'
 import AdvocateDetails from './views/Advocate/AdvocateDetails'
 import AllMeetings from './views/Meetings/AllMeetings'
 import MeetingDetails from './views/Meetings/MeetingDetails'
+import AdminTimeSlot from './views/AdminTimeSlot/AdminTimeSlot'
+import AddAdminTimeSlot from './views/AdminTimeSlot/AddAdminAdminSlot'
+import AllDemoMeetings from './views/DemoMeetings/AllDemoMeetings'
+import AllContactEnquiries from './views/ContactEnquiries/AllContactEnquiries'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
@@ -119,11 +123,22 @@ const routes = [
   { path: '/advocate/all-advocates', name: 'All Advocate', element: AllAdvocate },
   { path: '/advocate/add-advocate', name: 'Add Advocate', element: AddAdvocate },
   { path: '/advocate/advocate-detail/:id', name: 'Advocate Detail', element: AdvocateDetails },
-
+  
   // Meetings routes here
   { path: '/meetings/all-meetings', name: 'All Meetings', element: AllMeetings },
   { path: '/meetings/meeting-detail/:id', name: 'Meeting Detail', element: MeetingDetails },
-
+  
+  // Admin Time Slot routes here
+  { path: '/admin/all-time-slots', name: 'Admin Time Slots', element: AdminTimeSlot },
+  { path: '/admin/add-time-slot', name: 'Add Time Slot', element: AddAdminTimeSlot },
+  
+  // Meetings routes here
+  { path: '/meetings/all-demo-meetings', name: 'All Demo Meetings', element: AllDemoMeetings },
+  // { path: '/meetings/meeting-detail/:id', name: 'Meeting Detail', element: MeetingDetails },
+  
+  // Meetings routes here
+  { path: '/contact-enquiries/all-contact-enquiries', name: 'All Contact Enquiries', element: AllContactEnquiries },
+  
 ]
 
 export default routes

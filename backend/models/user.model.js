@@ -111,10 +111,10 @@ userSchema.pre("save", async function (next) {
 
 // ✅ instance method for password compare
 userSchema.methods.comparePassword = async function (plainPassword) {
-    console.log('Candidate password type:', typeof plainPassword);
-    console.log('Stored password type:', typeof this.password);
-    console.log('Candidate password:', plainPassword ? 'exists' : 'missing');
-    console.log('Stored password:', this.password ? 'exists' : 'missing');
+    // console.log('Candidate password type:', typeof plainPassword);
+    // console.log('Stored password type:', typeof this.password);
+    // console.log('Candidate password:', plainPassword ? 'exists' : 'missing');
+    // console.log('Stored password:', this.password ? 'exists' : 'missing');
     return await bcrypt.compare(plainPassword, this.password);
 };
 

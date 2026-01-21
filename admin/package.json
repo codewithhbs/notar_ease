@@ -30,6 +30,7 @@
     "chart.js": "^4.4.7",
     "classnames": "^2.5.1",
     "core-js": "^3.39.0",
+    "dayjs": "^1.11.19",
     "jodit-react": "^4.1.2",
     "lucide-react": "^0.474.0",
     "prop-types": "^15.8.1",

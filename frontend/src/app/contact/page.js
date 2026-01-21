@@ -1,5 +1,6 @@
 "use client";
 
+import api from "@/utils/api";
 import { motion } from "framer-motion";
 import {
   Phone,
@@ -11,8 +12,64 @@ import {
   Headphones,
   ArrowRight,
 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function ContactPage() {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const { name, email, phone, message } = formData;
+
+    if (!name || !email || !phone || !message) {
+      alert("All fields are required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await api.post("/api/contact-enquiry/create-contact-enquiry", {
+        name,
+        email,
+        phone,
+        message,
+      });
+
+      toast.success("Thank you! Your message has been sent successfully.");
+
+      // reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
+    } catch (error) {
+      console.log("Internal server error", error);
+      toast.error(error.response?.data?.message || "Something went wrong. Please try again.");
+      // alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {/* Hero Section */}
@@ -166,57 +223,76 @@ export default function ContactPage() {
             <h2 className="text-4xl font-bold text-center mb-8">
               Send Us a Message
             </h2>
-            <form className="space-y-6">
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-lg font-semibold mb-2">
                   Full Name
                 </label>
                 <input
                   type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-600"
                   placeholder="John Doe"
                 />
               </div>
+
               <div>
                 <label className="block text-lg font-semibold mb-2">
                   Email Address
                 </label>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-600"
                   placeholder="john@example.com"
                 />
               </div>
+
               <div>
                 <label className="block text-lg font-semibold mb-2">
                   Phone Number
                 </label>
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
                   className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-600"
                   placeholder="+91 9898989898"
                 />
               </div>
+
               <div>
                 <label className="block text-lg font-semibold mb-2">
                   Your Message
                 </label>
                 <textarea
                   rows={6}
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-600"
                   placeholder="How can we help you today?"
-                ></textarea>
+                />
               </div>
+
               <button
                 type="submit"
-                className="w-full bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold py-5 rounded-xl hover:shadow-2xl transition transform hover:scale-105 text-xl"
+                disabled={loading}
+                className="w-full bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold py-5 rounded-xl hover:shadow-2xl transition transform hover:scale-105 text-xl disabled:opacity-60"
               >
-                Send Message
+                {loading ? "Sending..." : "Send Message"}
               </button>
             </form>
           </div>
         </div>
       </section>
+
     </>
   );
 }

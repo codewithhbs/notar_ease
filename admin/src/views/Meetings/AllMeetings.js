@@ -50,11 +50,6 @@ const AllMeetings = () => {
             fetchMeetings();
         } catch (error) {
             console.log("Internal server error", error)
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                error: error.message
-            })
         }
     }
 
@@ -170,10 +165,16 @@ const AllMeetings = () => {
                                 </CTableDataCell>
 
                                 <CTableDataCell>
-                                    <strong>{meeting.advocateId?.name}</strong>
-                                    <p className="mb-0 text-muted text-sm">
-                                        {meeting.advocateId?.email}
-                                    </p>
+                                    {meeting.advocateId ? (
+                                        <>
+                                            <strong>{meeting.advocateId?.name}</strong>
+                                            <p className="mb-0 text-muted text-sm">
+                                                {meeting.advocateId?.email}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <p>Advocate not assigned</p>
+                                    )}
                                 </CTableDataCell>
 
                                 <CTableDataCell>

@@ -14,8 +14,6 @@ function buildISODateTime(date, time) {
   return new Date(`${datePart}T${time}:00+05:30`).toISOString();
 }
 
-
-
 const auth = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,

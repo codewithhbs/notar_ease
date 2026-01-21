@@ -92,6 +92,11 @@ function authenticateAccessToken(req, res, next) {
 ========================= */
 function authorizeRoles(...allowedRoles) {
   return (req, res, next) => {
+
+    // console.log("🔥 AUTHORIZE MIDDLEWARE HIT 🔥");
+    // console.log("Allowed roles:", allowedRoles);
+    // console.log("User role raw:", req.user?.role);
+
     if (!req.user?.role) {
       return res.status(403).json({
         success: false,
@@ -99,16 +104,25 @@ function authorizeRoles(...allowedRoles) {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user.role.toLowerCase().trim();
+    const roles = allowedRoles.map(r => r.toLowerCase().trim());
+
+    // console.log("Normalized role:", userRole);
+    // console.log("Normalized allowed:", roles);
+
+    if (!roles.includes(userRole)) {
+      console.log("❌ ROLE CHECK FAILED");
       return res.status(403).json({
         success: false,
         message: "Access denied. You do not have permission.",
       });
     }
 
+    // console.log("✅ ROLE CHECK PASSED");
     next();
   };
 }
+
 
 module.exports = {
   signAccessToken,

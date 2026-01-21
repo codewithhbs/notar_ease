@@ -49,8 +49,8 @@ const Page = () => {
         MobileNo: parsedUser.phone || "",
         DOB: "",
         Gender: "",
-        PageNo: 1,
-        signPosition: "bottom-right",
+        PageNo: [],
+        signPosition: "bottom-left",
         isDefault: true,
         idProof: null, // 👈 added
       },
@@ -82,8 +82,8 @@ const Page = () => {
         MobileNo: "",
         DOB: "",
         Gender: "",
-        PageNo: 1,
-        signPosition: "bottom-right",
+        PageNo: [],
+        signPosition: "bottom-left",
         isDefault: false,
         idProof: null,
       },
@@ -131,8 +131,13 @@ const Page = () => {
         const { isDefault, idProof, ...payload } = s;
 
         Object.entries(payload).forEach(([k, v]) => {
-          fd.append(`signatories[${i}][${k}]`, v);
+          if (Array.isArray(v)) {
+            fd.append(`signatories[${i}][${k}]`, JSON.stringify(v));
+          } else {
+            fd.append(`signatories[${i}][${k}]`, v);
+          }
         });
+
 
         // 👇 send idProof as file
         if (idProof) {
@@ -154,7 +159,7 @@ const Page = () => {
       toast.success("Meeting created successfully");
       window.location.href = "/dashboard";
     } catch (err) {
-      console.log("Internal server error",err)
+      console.log("Internal server error", err)
       toast.error(err.response?.data?.message || "Server error");
     } finally {
       setLoading(false);
@@ -191,6 +196,35 @@ const Page = () => {
             rows={3}
             className="w-full border rounded-lg px-4 py-2"
           />
+        </section>
+
+        {/* ================= Signing Mode ================= */}
+        <section className="bg-white rounded-2xl border p-6 space-y-4">
+          <h2 className="text-lg font-medium">Signing Mode</h2>
+
+          {[
+            ["adhaarESign", "Aadhaar eSign"],
+            ["dsc", "Digital Signature Certificate (DSC)"],
+            ["NEKYC", "NE-KYC"],
+          ].map(([value, label]) => (
+            <label key={value} className="flex gap-3 items-center text-sm">
+              <input
+                type="radio"
+                name="signingMode"
+                value={value}
+                checked={form.signingMode === value}
+                onChange={handleChange}
+              />
+              {label}
+            </label>
+          ))}
+
+          <p className="text-sm text-gray-600 leading-relaxed">
+            The signatories will have the option(s) to sign the document based on
+            your choice of signing mode(s) above. For example, if you choose
+            "Aadhaar eSign or DSC", then the signatories will have the option of
+            signing using Aadhaar eSign or the USB token based DSC.
+          </p>
         </section>
 
         {/* ================= Signatories ================= */}
@@ -275,23 +309,46 @@ const Page = () => {
                 />
               </div>
 
-              {/* Page Number */}
+              {/* Page Numbers */}
               <div className="space-y-1">
-                <label
-                  htmlFor={`page-${i}`}
-                  className="text-xs font-medium text-gray-600"
-                >
-                  Page Number
+                <label className="text-xs font-medium text-gray-600">
+                  Page Numbers
                 </label>
+
                 <input
-                  id={`page-${i}`}
-                  type="number"
-                  placeholder="Page No"
-                  value={s.PageNo}
-                  onChange={(e) => updateSignatory(i, "PageNo", e.target.value)}
+                  type="text"
+                  placeholder="Enter page numbers (e.g. 1,2,5)"
+                  value={s.pageNoInput}
+                  onBlur={() => {
+                    const clean = s.PageNo.join(",");
+                    updateSignatory(i, "pageNoInput", clean);
+                  }}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only numbers & commas
+                    if (!/^[0-9,]*$/.test(value)) return;
+
+                    // update RAW input
+                    updateSignatory(i, "pageNoInput", value);
+
+                    // convert to number array (safe)
+                    const pages = value
+                      .split(",")
+                      .map((p) => Number(p))
+                      .filter((p) => !isNaN(p) && p > 0);
+
+                    updateSignatory(i, "PageNo", pages);
+                  }}
                   className="border rounded px-3 py-2 w-full"
                 />
+
+                <p className="text-xs text-gray-500">
+                  Use comma separated page numbers
+                </p>
               </div>
+
+
 
               {/* Sign Position + Remove */}
               <div className="space-y-1">
@@ -309,11 +366,15 @@ const Page = () => {
                   }
                   className="border rounded px-3 py-2 w-full"
                 >
-                  <option value="bottom-right">Bottom Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="top-right">Top Right</option>
+                  {/* <option value="bottom-right">Bottom Right</option> */}
                   <option value="top-left">Top Left</option>
-                  <option value="center">Center</option>
+                  <option value="top-center">Top Center</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="middle-left">Middle Left</option>
+                  <option value="middle-center">Middle Center</option>
+                  <option value="middle-right">Middle Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom-center">Bottom Center</option>
                 </select>
 
                 {!s.isDefault && (
@@ -329,7 +390,9 @@ const Page = () => {
               {/* ID Proof Upload */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-600">
-                  ID Proof (Image)
+                  {form.signingMode === "NEKYC"
+                    ? "Passport (Image)"
+                    : "Aadhaar Card (Image)"}
                 </label>
                 <input
                   type="file"
@@ -344,35 +407,6 @@ const Page = () => {
             </div>
           ))}
 
-        </section>
-
-        {/* ================= Signing Mode ================= */}
-        <section className="bg-white rounded-2xl border p-6 space-y-4">
-          <h2 className="text-lg font-medium">Signing Mode</h2>
-
-          {[
-            ["adhaarESign", "Aadhaar eSign"],
-            ["dsc", "Digital Signature Certificate (DSC)"],
-            ["NEKYC", "NE-KYC"],
-          ].map(([value, label]) => (
-            <label key={value} className="flex gap-3 items-center text-sm">
-              <input
-                type="radio"
-                name="signingMode"
-                value={value}
-                checked={form.signingMode === value}
-                onChange={handleChange}
-              />
-              {label}
-            </label>
-          ))}
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            The signatories will have the option(s) to sign the document based on
-            your choice of signing mode(s) above. For example, if you choose
-            "Aadhaar eSign or DSC", then the signatories will have the option of
-            signing using Aadhaar eSign or the USB token based DSC.
-          </p>
         </section>
 
         {/* ================= Document Preparation ================= */}

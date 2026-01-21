@@ -5,6 +5,7 @@ const SIGN_URL = process.env.SIGNER_SIGN_URL;
 const DOWNLOAD_URL = process.env.SIGNER_DOWNLOAD_URL;
 
 const axios = require("axios");
+const getPdfPageSizes = require("./getPdfPageSizes");
 
 let AUTH_TOKEN = null;
 let TOKEN_EXPIRY = null;
@@ -33,7 +34,6 @@ async function getAuthToken() {
     return AUTH_TOKEN;
 }
 
-
 async function pdfUrlToBase64(pdfUrl) {
     const res = await axios.get(pdfUrl, {
         responseType: "arraybuffer",
@@ -42,66 +42,140 @@ async function pdfUrlToBase64(pdfUrl) {
     return Buffer.from(res.data).toString("base64");
 }
 
+function getPositionCoordinates(position, pageWidth, pageHeight) {
+    const marginX = pageWidth * 0.05;   // 5% margin
+    const marginY = pageHeight * 0.05;
 
-function getPositionCoordinates(position) {
     switch (position) {
-        case "bottom-left":
-            return { Left: 100, Top: 520 };
-        case "bottom-right":
-            return { Left: 600, Top: 520 };
+        // 🔼 TOP
         case "top-left":
-            return { Left: 100, Top: 100 };
+            return { Left: marginX, Top: marginY };
+
+        case "top-center":
+            return {
+                Left: pageWidth / 2 - 100,
+                Top: marginY,
+            };
+
         case "top-right":
-            return { Left: 600, Top: 100 };
+            return {
+                Left: pageWidth - marginX - 200,
+                Top: marginY,
+            };
+
+        // ⏺️ MIDDLE
+        case "middle-left":
+            return {
+                Left: marginX,
+                Top: pageHeight / 2 - 25,
+            };
+
+        case "middle-center":
+            return {
+                Left: pageWidth / 2 - 100,
+                Top: pageHeight / 2 - 25,
+            };
+
+        case "middle-right":
+            return {
+                Left: pageWidth - marginX - 200,
+                Top: pageHeight / 2 - 25,
+            };
+
+        // 🔽 BOTTOM
+        case "bottom-left":
+            return {
+                Left: marginX,
+                Top: pageHeight - marginY - 50,
+            };
+
+        case "bottom-center":
+            return {
+                Left: pageWidth / 2 - 100,
+                Top: pageHeight - marginY - 50,
+            };
+
+        case "bottom-right":
+            return {
+                Left: pageWidth - marginX - 200,
+                Top: pageHeight - marginY - 50,
+            };
+
         default:
-            return { Left: 300, Top: 520 };
+            return {
+                Left: pageWidth - marginX - 200,
+                Top: pageHeight - marginY - 50,
+            };
     }
 }
-
 
 async function buildSigningPayload(meeting) {
     const advocateEmail = meeting.advocateId.email;
 
-    // 🔹 SEQUENCE MAINTAINED
     const signatoryEmails = [];
     const signatureSettings = [];
     const controlDetails = [];
+
+    // 1️⃣ Download PDF
+    const pdfRes = await axios.get(meeting.documentUrl.pdf, {
+        responseType: "arraybuffer",
+    });
+
+    // 2️⃣ Get page sizes
+    const pageSizes = await getPdfPageSizes(pdfRes.data);
+    let signMode;
+
+    if(meeting.signingMode === 'adhaarESign'){
+        signMode = "12";
+    } else if(meeting.signingMode === 'dsc'){
+        signMode = "1";
+    } else if(meeting.signingMode === 'NEKYC'){
+        signMode = "3";
+    }
 
     meeting.signatories.forEach((signer, index) => {
         signatoryEmails.push(signer.email);
 
         signatureSettings.push({
-            ModeOfSignature: "3",
+            ModeOfSignature: signMode,
             Name: signer.name,
-            ...(signer.DOB ? { DOB: signer.DOB } : {}),
-            ...(signer.Gender ? { Gender: signer.Gender } : {}),
+            ...(signer.DOB && { DOB: signer.DOB }),
+            ...(signer.Gender && { Gender: signer.Gender }),
             MobileNo: signer.MobileNo,
             CountryCode: signer.CountryCode,
             Automatedsigningenabled: false,
         });
 
+        // 🔥 MULTIPLE PAGES SUPPORT
+        signer.PageNo.forEach((pageNo) => {
+            const pageIndex = pageNo - 1;
+            const page = pageSizes[pageIndex];
 
-        const pos = getPositionCoordinates(signer.signPosition);
+            if (!page) return;
 
-        controlDetails.push({
-            PageNo: String(signer.PageNo || 1),
-            ControlID: 4,
-            AssignedTo: index + 1, // 🔥 SAME ORDER
-            Left: pos.Left,
-            Top: pos.Top,
-            Height: 50,
-            Width: 200,
+            const pos = getPositionCoordinates(
+                signer.signPosition,
+                page.width,
+                page.height
+            );
+
+            controlDetails.push({
+                PageNo: String(pageNo),
+                ControlID: 4,
+                AssignedTo: index + 1,
+                Left: Math.round(pos.Left),
+                Top: Math.round(pos.Top),
+                Width: 200,
+                Height: 50,
+            });
         });
     });
 
-    const base64PDF = await pdfUrlToBase64(meeting.documentUrl.pdf);
+    const base64PDF = Buffer.from(pdfRes.data).toString("base64");
 
     return {
         EmailId: advocateEmail,
-        DonotSendCompletionMailToParticipants: false,
-        DoNotNotifyCustomer: false,
         WorkflowType: "1",
-        RedirectURL: "http://localhost:3000/thank-you",
         EnvelopeExpiry: 1,
         SignatoryEmailIds: signatoryEmails,
         SignatureSettings: signatureSettings,
@@ -114,8 +188,6 @@ async function buildSigningPayload(meeting) {
         ],
     };
 }
-
-
 
 async function initiateDocumentSigning(meeting) {
     const payload = await buildSigningPayload(meeting);
@@ -152,7 +224,7 @@ async function initiateDocumentSigning(meeting) {
 }
 
 async function downloadSignedDocument(workflowId) {
-     console.log("DOWNLOAD_URL =>", DOWNLOAD_URL);
+    console.log("DOWNLOAD_URL =>", DOWNLOAD_URL);
     console.log("workflowId =>", workflowId);
     if (!workflowId) {
         throw new Error("WorkflowId is required");
@@ -188,7 +260,7 @@ async function downloadSignedDocument(workflowId) {
                 },
             });
 
-            if(retry.data.IsSuccess === false) {
+            if (retry.data.IsSuccess === false) {
                 throw new Error(retry.data.Message || "Failed to download signed document");
             }
 
@@ -198,7 +270,6 @@ async function downloadSignedDocument(workflowId) {
         throw err;
     }
 }
-
 
 module.exports = {
     initiateDocumentSigning,

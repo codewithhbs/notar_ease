@@ -50,7 +50,7 @@ router.get("/advocate-details/:id", authenticateAccessToken, authorizeRoles("adm
 // meeting routes 
 
 router.get("/get-all-meetings", authenticateAccessToken, authorizeRoles("admin"), adminController.getAllMeetings)
-router.get("/delete-meeting/:id", authenticateAccessToken, authorizeRoles("admin"), adminController.deleteMeeting)
+router.delete("/delete-meeting/:id", authenticateAccessToken, authorizeRoles("admin"), adminController.deleteMeeting)
 router.get("/get-meeting/:id", adminController.getMeetingDetails)
 router.get("/get-signed-document/:id", adminController.getSignedDocument)
 

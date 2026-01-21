@@ -118,12 +118,27 @@ async function addTimeSlot(req, res) {
         const advocateId = req.user?.sub;
         const { date, startTime, endTime } = req.body;
 
+        const exists = await AdvocateTimeSlot.findOne({
+            advocateId,
+            date,
+            startTime,
+            endTime,
+        });
+
+        if (exists) {
+            return res.status(400).json({
+                success: false,
+                message: "This time slot already exists",
+            });
+        }
+
+
         const user = await User.findById(advocateId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        if (user.role !== "notary") {
+        if (user.role !== "notary" && user.role !== "admin") {
             return res.status(403).json({ success: false, message: "Access denied. You do not have permission." });
         }
 
@@ -149,8 +164,9 @@ async function getAdvocateTimeSlot(req, res) {
     try {
         const advocateId = req.user?.sub;
         const timeSlot = await AdvocateTimeSlot.find({ advocateId: advocateId });
+        // console.log("advocateId", advocateId, timeSlot)
         if (!timeSlot) {
-            return res.status(404).json({ success: false, message: "Time slot not found" });
+            return res.status(200).json({ success: true, message: "Time slot not found" });
         }
         res.status(201).json({
             success: true,
@@ -167,35 +183,61 @@ async function getAdvocateTimeSlot(req, res) {
     }
 }
 
+async function getAdminTimeSlot(req, res) {
+    try {
+        const timeSlot = await AdvocateTimeSlot.find().populate("advocateId", "name familyName email role");
+        if (!timeSlot) {
+            return res.status(200).json({ success: true, message: "Time slot not found" });
+        }
+
+        const filterAdminSlots = timeSlot.filter(slot => slot.advocateId && slot.advocateId.role === "admin");
+        res.status(200).json({
+            success: true,
+            timeSlots: filterAdminSlots
+        });
+    } catch (error) {
+        console.log("Internal server error", error)
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
 async function deleteAdvocateTimeSlot(req, res) {
     try {
-        const advocateId = req.user?.sub;
         const { id } = req.params;
+        const userId = req.user.sub;
+        const role = req.user.role;
 
-        const timeSlot = await AdvocateTimeSlot.findOne({
-            _id: id,
-            advocateId: advocateId,
-        });
-
-        if (!timeSlot) {
+        const slot = await AdvocateTimeSlot.findById(id);
+        if (!slot) {
             return res.status(404).json({
                 success: false,
-                message: "Time slot not found or unauthorized",
+                message: "Time slot not found",
             });
         }
 
-        await AdvocateTimeSlot.deleteOne({ _id: id });
+        // 🔒 Notary sirf apna slot delete kare
+        if (role === "notary" && slot.advocateId.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You can delete only your own time slots",
+            });
+        }
+
+        await AdvocateTimeSlot.findByIdAndDelete(id);
 
         return res.status(200).json({
             success: true,
             message: "Time slot deleted successfully",
         });
     } catch (error) {
-        console.error("Delete TimeSlot Error:", error);
+        console.log("Delete slot error", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: error.message,
         });
     }
 }
@@ -224,15 +266,26 @@ async function getAllTimeSlots(req, res) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // ✅ Step 1: Find all admin advocates
+        const adminAdvocates = await User.find(
+            { role: "admin" },
+            { _id: 1 }
+        );
+
+        const adminIds = adminAdvocates.map(a => a._id);
+
+        // ✅ Step 2: Fetch time slots EXCLUDING admin advocates
         const timeSlotsRaw = await AdvocateTimeSlot.find({
             date: { $gte: today },
+            advocateId: { $nin: adminIds }, // 🔥 MAIN CONDITION
         })
-            .populate("advocateId", "name familyName email")
+            .populate("advocateId", "name familyName email role")
             .sort({ date: 1, startTime: 1 });
 
+        // ✅ Remove duplicate slots
         const seen = new Set();
         const timeSlots = timeSlotsRaw.filter(slot => {
-            const key = `${slot.date.toISOString().split('T')[0]}-${slot.startTime}-${slot.endTime}`;
+            const key = `${slot.date.toISOString().split("T")[0]}-${slot.startTime}-${slot.endTime}`;
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -245,7 +298,7 @@ async function getAllTimeSlots(req, res) {
             });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             timeSlots,
         });
@@ -329,5 +382,6 @@ module.exports = {
     deleteAdvocateTimeSlot,
     getAdvocateDetails,
     getAllTimeSlots,
-    checkTimeSlotAvailability
+    checkTimeSlotAvailability,
+    getAdminTimeSlot
 };

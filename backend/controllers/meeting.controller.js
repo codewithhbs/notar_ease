@@ -1,8 +1,11 @@
 const AdvocateTimeSlotModel = require("../models/AdvocateTimeSlot.model");
 const Meeting = require("../models/meeting.model");
 const signedDocumentModel = require("../models/signedDocument.model");
+const meetingEndQueue = require("../queues/meetingEnd.queue");
+const meetingReminderQueue = require("../queues/meetingReminder.queue");
 const { uploadPDF, uploadImage, deleteImageFromCloudinary } = require("../utils/Cloudnary");
 const { initiateDocumentSigning } = require("../utils/DocumentSigner");
+const getPdfPageCount = require("../utils/getPdfPageCount");
 const createGoogleMeet = require("../utils/googleMeet");
 const logMeetingAudit = require("../utils/logMeetingAudit");
 const { initiateRazorpay } = require("../utils/Pay");
@@ -25,6 +28,29 @@ function verifyRazorpaySignature({ orderId, paymentId, signature }) {
 }
 
 const toBoolean = (value) => value === true || value === "true";
+
+function parsePageNo(pageNo) {
+  if (!pageNo) return [];
+
+  // If already array
+  if (Array.isArray(pageNo)) {
+    return pageNo.map(Number).filter((n) => n > 0);
+  }
+
+  // If stringified JSON
+  if (typeof pageNo === "string") {
+    try {
+      const parsed = JSON.parse(pageNo);
+      if (Array.isArray(parsed)) {
+        return parsed.map(Number).filter((n) => n > 0);
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  return [];
+}
 
 async function createMeeting(req, res) {
   try {
@@ -107,6 +133,16 @@ async function createMeeting(req, res) {
       });
     }
 
+    const totalPdfPages = await getPdfPageCount(pdfFile.buffer);
+
+    if (!totalPdfPages || totalPdfPages <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Unable to read PDF pages",
+      });
+    }
+
+
     /* =========================
        NORMALIZE SIGNATORIES
     ========================= */
@@ -115,20 +151,25 @@ async function createMeeting(req, res) {
       : [signatories];
 
     const allowedPositions = [
-      "bottom-left",
       "top-left",
+      "top-center",
       "top-right",
+      "middle-left",
+      "middle-center",
+      "middle-right",
+      "bottom-left",
       "bottom-right",
-      "bottom-center",
-      "center",
+      "bottom-center"
     ];
+
+    let validationError = null;
 
     const formattedSignatories = await Promise.all(
       normalizedSignatories.map(async (s, index) => {
 
         let idProofData = null;
 
-        // If idProof file exists for this signer
+        // 👇 ID Proof upload
         const idProofFile =
           req.files?.[`signatories[${index}][idProof]`] ||
           req.files?.[`signatories.${index}.idProof`];
@@ -138,8 +179,28 @@ async function createMeeting(req, res) {
 
           idProofData = {
             image: upload.image,
-            public_id: upload.public_id
+            public_id: upload.public_id,
           };
+        }
+
+        const parsedPageNo = parsePageNo(s.PageNo);
+
+        // ❌ Empty
+        if (!parsedPageNo.length) {
+          throw new Error(`Page number is required for signatory ${index + 1}`);
+        }
+
+        // ❌ Duplicate pages
+        const uniquePages = [...new Set(parsedPageNo)];
+        if (uniquePages.length !== parsedPageNo.length) {
+          throw new Error(`Duplicate page numbers are not allowed for signatory ${index + 1}`);
+        }
+
+        // console.log("parsedPageNo",parsedPageNo)
+
+        // ❌ Page exceeds PDF length
+        if (parsedPageNo.some((p) => p > totalPdfPages)) {
+          throw new Error(`Page number exceeds PDF length for signatory ${index + 1}`);
         }
 
         return {
@@ -149,17 +210,18 @@ async function createMeeting(req, res) {
           MobileNo: s.MobileNo,
           DOB: s.DOB,
           Gender: s.Gender,
-          PageNo: s.PageNo,
+
+          // ✅ FINAL ARRAY OF NUMBERS
+          PageNo: parsedPageNo,
+
           signPosition: allowedPositions.includes(s.signPosition)
             ? s.signPosition
-            : "bottom-right",
+            : "bottom-left",
 
-          // 👇 this is the only new thing added
-          idProof: idProofData
+          idProof: idProofData,
         };
       })
     );
-
 
     const signatoryCount = formattedSignatories.length;
 
@@ -232,6 +294,7 @@ async function createMeeting(req, res) {
     return res.status(500).json({
       success: false,
       message: "Server error",
+      error: error.message,
     });
   }
 }
@@ -291,7 +354,6 @@ async function createPayment(req, res) {
     });
   }
 }
-
 
 async function checkStatus(req, res) {
   console.log("🔔 checkStatus API HIT");
@@ -443,6 +505,57 @@ async function updateTimeSlot(req, res) {
 
     await meeting.save();
 
+    /* ===============================
+       🔔 ADD BULL JOBS HERE
+    ================================ */
+
+    const now = new Date();
+    const startTime = new Date(meeting.startTime);
+    const endTime = new Date(meeting.endTime);
+
+    // 24 hour reminder
+    const delay24h = startTime - now - 24 * 60 * 60 * 1000;
+    if (delay24h > 0) {
+      await meetingReminderQueue.add(
+        {
+          meetingId: meeting._id,
+          type: "24_HOURS",
+        },
+        {
+          delay: delay24h,
+          jobId: `reminder:${meeting._id}:24h`,
+        }
+      );
+    }
+
+    // 15 minute reminder
+    const delay15m = startTime - now - 15 * 60 * 1000;
+    if (delay15m > 0) {
+      await meetingReminderQueue.add(
+        {
+          meetingId: meeting._id,
+          type: "15_MINUTES",
+        },
+        {
+          delay: delay15m,
+          jobId: `reminder:${meeting._id}:15m`,
+        }
+      );
+    }
+
+    // meeting end job
+    const endDelay = endTime - now;
+    if (endDelay > 0) {
+      await meetingEndQueue.add(
+        {
+          meetingId: meeting._id,
+        },
+        {
+          delay: endDelay,
+          jobId: `end:${meeting._id}`,
+        }
+      );
+    }
 
     res.status(200).json({ success: true, message: "Meeting updated" });
   } catch (error) {
@@ -501,7 +614,6 @@ async function getMeetingByUserAndAdvocate(req, res) {
         { advocateId: userId }
       ]
     };
-
 
     // =========================
     // TOTAL COUNT

@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { Menu, X, Shield, Phone, Gavel } from "lucide-react";
+import DemoMeetingModel from "../DemoMeetingModel/DemoMeetingModel";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDemo, setOpenDemo] = useState(false);
 
   const [loggedIn, setLoggedIn] = useState(false);
+
+  const handleOpenDemo = () => {
+    setMobileMenuOpen(false); // close mobile header
+    setOpenDemo(true);        // open modal
+  };
+
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -68,9 +76,16 @@ export default function Header() {
             {/* Right Side - Phone + CTA */}
             <div className="flex items-center gap-4">
               {/* Phone Number - Hidden on small screens */}
-              <div className="hidden md:flex items-center gap-2 text-gray-800 font-semibold">
+              {/* <div className="hidden md:flex items-center gap-2 text-gray-800 font-semibold">
                 <Phone className="w-5 h-5 text-indigo-600" />
                 <span>+91 9898989898</span>
+              </div> */}
+
+              <div
+                onClick={() => setOpenDemo(true)}
+                className="bg-linear-to-r hidden md:flex cursor-pointer from-indigo-600 to-blue-700 text-white px-6 py-3 rounded-full font-bold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2"
+              >
+                Book a Demo
               </div>
 
               {/* Book Appointment Button */}
@@ -129,26 +144,26 @@ export default function Header() {
               ))}
 
               <div className="pt-4 flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-gray-800 font-semibold">
-                  <Phone className="w-5 h-5 text-indigo-600" />
-                  +91 9898989898
+                <div onClick={handleOpenDemo} className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg">
+                  {/* <Phone className="w-5 h-5 text-indigo-600" /> */}
+                  Book a Demo
                 </div>
                 {loggedIn ? (
-                <a
-                  href="/dashboard"
-                  className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </a>
+                  <a
+                    href="/dashboard"
+                    className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </a>
                 ) : (
-                <a
-                  href="/login"
-                  className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Login
-                </a>
+                  <a
+                    href="/login"
+                    className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Login
+                  </a>
                 )}
               </div>
             </div>
@@ -158,6 +173,7 @@ export default function Header() {
 
       {/* Spacer so content doesn't hide under fixed header */}
       <div className="h-18 lg:h-20"></div>
+      {openDemo && <DemoMeetingModel onClose={() => setOpenDemo(false)} />}
     </>
   );
 }

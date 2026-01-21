@@ -327,7 +327,7 @@ const Page = () => {
                     <td className="border px-3 py-2">
                       {sig.CountryCode} {sig.MobileNo}
                     </td>
-                    <td className="border px-3 py-2">{sig.PageNo}</td>
+                    <td className="border px-3 py-2">{sig.PageNo.map(Number).join(", ")}</td>
                     <td className="border px-3 py-2">{sig.signPosition}</td>
                     <td className="border px-3 py-2 space-y-2">
                       <a target='_blank' href={sig.idProof?.image}>

@@ -32,8 +32,26 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'Advocate Time Slot',
+    to: '/admin/all-time-slots',
+    icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'Meetings',
     to: '/meetings/all-meetings',
+    icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Demo Meetings',
+    to: '/meetings/all-demo-meetings',
+    icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Contact Enquiries',
+    to: '/contact-enquiries/all-contact-enquiries',
     icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
   },
 ]

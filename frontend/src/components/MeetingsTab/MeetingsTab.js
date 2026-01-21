@@ -148,12 +148,12 @@ export default function MeetingsTab({ openModal }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl sm:text-3xl font-bold">Meetings</h2>
         {!isNotary && (
-        <Link
-          href={'/dashboard/create-meeting'}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 hover:bg-indigo-700"
-        >
-          <Plus className="w-4 h-4" /> Create Meeting
-        </Link>
+          <Link
+            href={'/dashboard/create-meeting'}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 hover:bg-indigo-700"
+          >
+            <Plus className="w-4 h-4" /> Create Meeting
+          </Link>
         )}
       </div>
 

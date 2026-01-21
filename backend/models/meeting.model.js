@@ -7,11 +7,15 @@ const signerSchema = new mongoose.Schema({
   MobileNo: { type: String },
   DOB: { type: Date },
   Gender: { type: String },
-  PageNo: { type: Number },
+  PageNo: [
+    {
+      type: Number,
+    },
+  ],
   signPosition: {
     type: String,
     enum: ["bottom-left", "top-left", "top-right", "bottom-right", "bottom-center", "top-center", "middle-center", "middle-left", "middle-right"],
-    default: "bottom-right",
+    default: "bottom-left",
   },
   idProof: {
     image: {
@@ -42,17 +46,14 @@ const signerSchema = new mongoose.Schema({
 const meetingSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    // required: true,
+    ref: "User"
   },
   advocateId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    // required: true,
+    ref: "User"
   },
   meetingTitle: {
-    type: String,
-    // required: true,
+    type: String
   },
   meetingDescription: {
     type: String,
@@ -92,20 +93,17 @@ const meetingSchema = new mongoose.Schema({
     default: false,
   },
   meetLink: {
-    type: String,
-    // required: true,
+    type: String
   },
   timeSlotId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "AdvocateTimeSlot",
   },
   startTime: {
-    type: Date,
-    // required: true,
+    type: Date
   },
   endTime: {
-    type: Date,
-    // required: true,
+    type: Date
   },
   isPaid: {
     type: Boolean,

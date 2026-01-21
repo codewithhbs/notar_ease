@@ -1,29 +1,19 @@
-const cron = require("node-cron");
+const meetingEndQueue = require("../queues/meetingEnd.queue");
 const Meeting = require("../models/meeting.model");
 const logMeetingAudit = require("../utils/logMeetingAudit");
 
-cron.schedule("* * * * *", async () => {
-  try {
-    console.log("Cron job for end meeting");
-    const now = new Date();
+meetingEndQueue.process(async (job) => {
+  const { meetingId } = job.data;
 
-    const meetings = await Meeting.find({
-      isMeetingEnded: { $ne: true },
-      endTime: { $lt: now },
-    });
+  const meeting = await Meeting.findById(meetingId);
+  if (!meeting || meeting.isMeetingEnded) return;
 
-    console.log("meetings", meetings.length);
+  meeting.isMeetingEnded = true;
+  meeting.status = "completed";
+  await meeting.save();
 
-    for (const meeting of meetings) {
-      meeting.isMeetingEnded = true;
-      await meeting.save();
-
-      await logMeetingAudit({
-        meetingId: meeting._id,
-        action: "MEETING_ENDED",
-      });
-    }
-  } catch (err) {
-    console.error("Meeting end cron error:", err.message);
-  }
+  await logMeetingAudit({
+    meetingId,
+    action: "MEETING_ENDED",
+  });
 });
