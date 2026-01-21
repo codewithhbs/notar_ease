@@ -10,9 +10,6 @@ export default function Page() {
           <h1 className="text-4xl font-bold text-gray-900">
             Refund & Cancellation Policy
           </h1>
-          <p className="mt-3 text-gray-600">
-            Last updated: 13 October 2024
-          </p>
           <p className="mt-4 text-gray-700 leading-relaxed">
             This Refund & Cancellation Policy explains the circumstances under which
             refunds or cancellations may be requested for services provided by
