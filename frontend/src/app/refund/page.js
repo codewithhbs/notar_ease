@@ -133,7 +133,7 @@ export default function Page() {
             hello@ommdocumentation.com
           </p>
           <p className="mt-2 text-gray-600">
-            We aim to respond within 3–5 working days.
+            We aim to respond within 3-5 working days.
           </p>
         </section>
 

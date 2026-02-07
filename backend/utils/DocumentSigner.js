@@ -191,6 +191,7 @@ async function buildSigningPayload(meeting) {
 
 async function initiateDocumentSigning(meeting) {
     const payload = await buildSigningPayload(meeting);
+    console.log("Signing Payload =>", payload);
 
     let token = await getAuthToken();
 
@@ -201,6 +202,8 @@ async function initiateDocumentSigning(meeting) {
                 "Content-Type": "application/json",
             },
         });
+
+        console.log("res.data",res.data)
 
         return res.data;
     } catch (err) {

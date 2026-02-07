@@ -22,7 +22,8 @@ const Page = () => {
     MobileNo: '',
     DOB: '',
     Gender: '',
-    PageNo: 1,
+    PageNo: [],          // 👈 backend ke liye
+    pageInput: '',       // 👈 UI ke liye ( "1,2,3" )
     signPosition: 'bottom-right',
   })
 
@@ -153,8 +154,10 @@ const Page = () => {
     try {
       toast.loading('Processing...', { toastId: 'signer' })
 
+      // 1️⃣ Try to add signer
       await api.post(`/api/meeting/adv-sign-detail/${id}`, signerForm)
 
+      // 2️⃣ If success → send document
       await api.post(`/api/meeting/send-document-for-sign/${id}`)
 
       toast.update('signer', {
@@ -167,15 +170,44 @@ const Page = () => {
       setShowSignerModal(false)
 
     } catch (err) {
-      console.log("error", err)
+      const status = err.response?.status
+      const message = err.response?.data?.message
+
+      // 🔥 IMPORTANT PART
+      if (status === 400 && message === 'Signer already exists') {
+        try {
+          // 👉 signer already hai, sirf document bhejo
+          await api.post(`/api/meeting/send-document-for-sign/${id}`)
+
+          toast.update('signer', {
+            render: 'Signer already existed. Document sent for signing.',
+            type: 'success',
+            isLoading: false,
+          })
+
+          setMeeting(prev => ({ ...prev, isSigned: true }))
+          setShowSignerModal(false)
+          return
+        } catch (sendErr) {
+          toast.update('signer', {
+            render:
+              sendErr.response?.data?.message ||
+              'Failed to send document',
+            type: 'error',
+            isLoading: false,
+          })
+          return
+        }
+      }
+
+      // ❌ other errors
       toast.update('signer', {
-        render: err.response?.data?.message || 'Failed',
+        render: message || 'Failed',
         type: 'error',
         isLoading: false,
       })
     }
   }
-
 
   /* ================= SIGNER DOC UPLOAD ================= */
   const handleFaceImageUpload = async (file, signerIndex) => {
@@ -332,16 +364,16 @@ const Page = () => {
                     <td className="border px-3 py-2 space-y-2">
                       <a target='_blank' href={sig.idProof?.image}>
                         {sig.idProof?.image ? (
-                        <img
-                          src={sig.idProof.image}
-                          alt="Signer IdProof"
-                          className="w-16 h-16 object-cover rounded border mx-auto"
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-400 block">
-                          No document
-                        </span>
-                      )}
+                          <img
+                            src={sig.idProof.image}
+                            alt="Signer IdProof"
+                            className="w-16 h-16 object-cover rounded border mx-auto"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-400 block">
+                            No document
+                          </span>
+                        )}
                       </a>
                     </td>
 
@@ -349,16 +381,16 @@ const Page = () => {
                     <td className="border px-3 py-2 space-y-2">
                       <a target='_blank' href={sig.faceImage?.image}>
                         {sig.faceImage?.image ? (
-                        <img
-                          src={sig.faceImage.image}
-                          alt="Signer Doc"
-                          className="w-16 h-16 object-cover rounded border mx-auto"
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-400 block">
-                          No document
-                        </span>
-                      )}
+                          <img
+                            src={sig.faceImage.image}
+                            alt="Signer Doc"
+                            className="w-16 h-16 object-cover rounded border mx-auto"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-400 block">
+                            No document
+                          </span>
+                        )}
                       </a>
 
                       {!isUser && (
@@ -390,16 +422,16 @@ const Page = () => {
                     <td className="border px-3 py-2 space-y-2">
                       <a target='_blank' href={sig.doc?.image}>
                         {sig.doc?.image ? (
-                        <img
-                          src={sig.doc.image}
-                          alt="Signer Doc"
-                          className="w-16 h-16 object-cover rounded border mx-auto"
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-400 block">
-                          No document
-                        </span>
-                      )}
+                          <img
+                            src={sig.doc.image}
+                            alt="Signer Doc"
+                            className="w-16 h-16 object-cover rounded border mx-auto"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-400 block">
+                            No document
+                          </span>
+                        )}
                       </a>
 
                       {!isUser && (
@@ -547,13 +579,31 @@ const Page = () => {
 
             {/* PAGE NO */}
             <input
-              type="number"
-              value={signerForm.PageNo}
-              onChange={e =>
-                setSignerForm({ ...signerForm, PageNo: e.target.value })
-              }
+              type="text"
+              placeholder="Enter page numbers (e.g. 1,2,3)"
+              value={signerForm.pageInput}
+              onChange={(e) => {
+                const value = e.target.value
+
+                const pagesArray = [
+                  ...new Set(
+                    value
+                      .split(',')
+                      .map(p => Number(p.trim()))
+                      .filter(n => !isNaN(n) && n > 0)
+                  )
+                ]
+
+                setSignerForm({
+                  ...signerForm,
+                  pageInput: value,   // UI ke liye
+                  PageNo: pagesArray, // backend ke liye
+                })
+              }}
               className="w-full border p-2 mb-3 rounded"
             />
+
+
 
             {/* SIGN POSITION */}
             <select

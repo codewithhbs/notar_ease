@@ -10,6 +10,29 @@ const createGoogleMeet = require("../utils/googleMeet");
 const logMeetingAudit = require("../utils/logMeetingAudit");
 const { initiateRazorpay } = require("../utils/Pay");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+const { PDFDocument } = require("pdf-lib");
+
+function getStampPosition(page, position, stampWidth, stampHeight) {
+  const { width, height } = page.getSize();
+  const margin = 60;
+
+  switch (position) {
+    case "bottom-right":
+      return { x: width - stampWidth - margin, y: margin };
+    case "bottom-left":
+      return { x: margin, y: margin };
+    case "top-right":
+      return { x: width - stampWidth - margin, y: height - stampHeight - margin };
+    case "top-left":
+      return { x: margin, y: height - stampHeight - margin };
+    default:
+      return { x: margin, y: margin };
+  }
+}
+
 
 function buildDateObject(date, time) {
   const datePart = new Date(date).toISOString().split("T")[0]; // YYYY-MM-DD
@@ -260,6 +283,13 @@ async function createMeeting(req, res) {
       currency = "USD";
     }
 
+    if (!amount) {
+      return res.status(400).json({
+        success: false,
+        message: "There is no pricing available for the selected options",
+      });
+    }
+
     /* =========================
        CREATE MEETING
     ========================= */
@@ -497,6 +527,7 @@ async function updateTimeSlot(req, res) {
     meeting.endTime = endDateTime;
     meeting.timeSlotId = timeSlot._id;
     meeting.advocateId = timeSlot.advocateId;
+    meeting.status = "live";
 
     console.log("🕒 Final meeting times:", {
       start: meeting.startTime,
@@ -572,7 +603,15 @@ async function joinMeeting(req, res) {
   const meeting = await Meeting.findById(req.params.id);
 
   const now = new Date();
-  const allowed = now >= meeting.startTime && now <= meeting.endTime;
+  const startTime = new Date(meeting.startTime).getTime();
+  const endTime = new Date(meeting.endTime).getTime();
+
+  // 30 minutes in milliseconds
+  const EARLY_JOIN_MS = 30 * 60 * 1000;
+
+  const allowed =
+    now >= (startTime - EARLY_JOIN_MS) &&
+    now <= endTime;
 
   await logMeetingAudit({
     meetingId: meeting._id,
@@ -581,7 +620,11 @@ async function joinMeeting(req, res) {
     meta: { allowed },
   });
 
-  if (!allowed) {
+  if (now < startTime - EARLY_JOIN_MS) {
+    return res.status(403).json({ message: "Meeting has not started yet" });
+  }
+
+  if (now > endTime) {
     return res.status(403).json({ message: "Meeting is expired" });
   }
 
@@ -594,7 +637,9 @@ async function joinMeeting(req, res) {
 
 async function getMeetingByUserAndAdvocate(req, res) {
   try {
-    const userId = req.user?.sub; // logged-in user / advocate id
+    const userId = req.user?.sub;
+    const role = req.user?.role; // "user" or "advocate"
+    // console.log("userId, role", userId, role)
 
     // =========================
     // QUERY PARAMS
@@ -606,14 +651,21 @@ async function getMeetingByUserAndAdvocate(req, res) {
     const skip = (page - 1) * limit;
 
     // =========================
-    // FILTER
-    // ========================= 
-    const filter = {
-      $or: [
-        { userId: userId },
-        { advocateId: userId }
-      ]
-    };
+    // FILTER BASED ON ROLE
+    // =========================
+    let filter = {};
+
+    if (role === "notary") {
+      filter = { advocateId: userId };
+    }
+    else if (role === "user") {
+      filter = { userId: userId };
+    } else if (role === "admin") {
+      filter = {
+        $or: [{ userId }, { advocateId: userId }]
+      };
+    }
+
 
     // =========================
     // TOTAL COUNT
@@ -623,7 +675,7 @@ async function getMeetingByUserAndAdvocate(req, res) {
     // =========================
     // FETCH MEETINGS
     // =========================
-    const meetings = await Meeting.find()
+    const meetings = await Meeting.find(filter)
       .sort({ createdAt: sort })
       .skip(skip)
       .limit(limit);
@@ -631,7 +683,7 @@ async function getMeetingByUserAndAdvocate(req, res) {
     if (!meetings || meetings.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No meetings found for this user",
+        message: "No meetings found",
       });
     }
 
@@ -725,6 +777,14 @@ async function advSignDetail(req, res) {
       });
     }
 
+    const cleanPageNo = [
+  ...new Set(
+    (Array.isArray(PageNo) ? PageNo : [PageNo])
+      .map(Number)
+      .filter(n => !isNaN(n))
+  )
+];
+
     // ✅ Create signer object
     const signer = {
       name,
@@ -733,7 +793,7 @@ async function advSignDetail(req, res) {
       MobileNo,
       DOB,
       Gender,
-      PageNo,
+      PageNo: cleanPageNo,
       signPosition,
     };
 
@@ -742,6 +802,14 @@ async function advSignDetail(req, res) {
 
     // 🔢 Update count
     meeting.signatoryCount = meeting.signatories.length;
+
+    meeting.notaryDetails = {
+      name,
+      email,
+      MobileNo,
+      PageNo,
+      signPosition,
+    };
 
     await meeting.save();
 
@@ -799,6 +867,8 @@ async function sendDocumentForSign(req, res) {
         message: "Failed to initiate document signing",
       });
     }
+
+    console.log("response",response.Response)
 
     const {
       WorkflowId,
@@ -1004,6 +1074,97 @@ async function uploadDocOfSigner(req, res) {
   }
 }
 
+async function doStampDuty(req, res) {
+  try {
+    const { id } = req.params;
+
+    const meeting = await Meeting.findById(id);
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found"
+      });
+    }
+
+    // const pdfUrl = meeting?.signedDocumentUrl;
+    const pdfUrl = 'https://res.cloudinary.com/duxsqzrot/image/upload/v1769852947/dummy_cb9sqa.pdf';
+    if (!pdfUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Document not signed yet"
+      });
+    }
+
+    const { PageNo, signPosition } = meeting.notaryDetails;
+
+    // 1️⃣ Download signed PDF
+    const pdfResponse = await axios.get(pdfUrl, {
+      responseType: "arraybuffer"
+    });
+
+    // console.log("PDF Content-Type:", pdfResponse.headers["content-type"]);
+
+
+    const pdfDoc = await PDFDocument.load(pdfResponse.data);
+
+    // 2️⃣ Load stamp image
+    const stampPath = path.join(process.cwd(), "public/stamp.jpg");
+    const stampBytes = fs.readFileSync(stampPath);
+    const stampImage = await pdfDoc.embedJpg(stampBytes);
+    // const stampImage = await pdfDoc.embedPng(stampBytes);
+
+    const stampWidth = 120;
+    const stampHeight = 90;
+
+    // 3️⃣ Apply stamp on given pages
+    for (let pageIndex of PageNo) {
+      const page = pdfDoc.getPage(pageIndex - 1);
+
+      const { x, y } = getStampPosition(
+        page,
+        signPosition,
+        stampWidth,
+        stampHeight
+      );
+
+      page.drawImage(stampImage, {
+        x,
+        y,
+        width: stampWidth,
+        height: stampHeight
+      });
+    }
+
+    // 4️⃣ Save PDF to buffer
+    const stampedPdfBuffer = Buffer.from(await pdfDoc.save());
+
+    // 5️⃣ Upload to Cloudinary
+    const uploaded = await uploadPDF(stampedPdfBuffer);
+
+    // 6️⃣ Save in meeting
+    meeting.stampedDocumentUrl = {
+      pdf: uploaded.pdf,
+      public_id: uploaded.public_id
+    };
+
+    await meeting.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Stamp added & uploaded successfully",
+      stampedDocumentUrl: meeting.stampedDocumentUrl
+    });
+
+  } catch (error) {
+    console.error("Stamp Duty Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   createMeeting,
   createPayment,
@@ -1015,5 +1176,6 @@ module.exports = {
   uploadDocOfSigner,
   advSignDetail,
   sendDocumentForSign,
-  uploadFaceImage
+  uploadFaceImage,
+  doStampDuty
 };

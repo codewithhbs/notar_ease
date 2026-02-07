@@ -75,14 +75,14 @@ export default function MeetingsTab({ openModal }) {
 
     paid: {
       user: {
-        label: "View Meeting",
-        href: (id) => `/dashboard/view-meeting/${id}`,
+        label: "Schedule Meeting",
+        href: (id) => `/dashboard/schedule/${id}`,
         className: "bg-green-600 hover:bg-green-700",
       },
       notary: {
-        label: "Join Meeting",
-        href: (id) => `/dashboard/view-meeting/${id}`,
-        className: "bg-green-600 hover:bg-green-700",
+        label: "Waiting for Payment",
+        href: null,
+        className: "bg-gray-400 cursor-not-allowed",
       },
     },
 

@@ -24,7 +24,7 @@ export default function Page() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://www.api.ommdocumentation.com/";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -40,20 +40,20 @@ export default function Page() {
         // 🔐 Store in localStorage
         try {
           localStorage.setItem("user", JSON.stringify(user));
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          localStorage.setItem("sessionId", sessionId);
+          localStorage.setItem("accessToken", accessToken || "");
+          localStorage.setItem("refreshToken", refreshToken || "");
+          localStorage.setItem("sessionId", sessionId || "");
         } catch (err) {
           console.warn("LocalStorage error:", err);
         }
 
-        toast.success("Account created successfully! Redirecting...", {
-          autoClose: 1800,
+        toast.success("Login successful! Redirecting...", {
+          autoClose: 500,
         });
 
         setTimeout(() => {
           router.push("/dashboard");
-        }, 1400);
+        }, 500);
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed. Please try again.';

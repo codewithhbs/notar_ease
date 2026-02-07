@@ -4,25 +4,25 @@ const signedDocumentSchema = new mongoose.Schema({
     meetingId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Meeting",
-        required: true,
+        // required: true,
     },
     WorkflowId: {
         type: Number,
-        required: true,
+        // required: true,
     },
     DocumentNumberList: {
         type: Array,
-        required: true,
+        // required: true,
     },
     DocumentIdList: [
         {
             type: Number,
-            required: true,
+            // required: true,
         }
     ],
     url: {
         type: String,
-        required: true
+        // required: true
     }
 }, { timestamps: true });
 

@@ -145,7 +145,36 @@ const meetingSchema = new mongoose.Schema({
   isMeetingEnded: {
     type: Boolean,
     default: false
-  }
+  },
+  notaryDetails: {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String
+    },
+    MobileNo: {
+      type: String
+    },
+    PageNo: [
+      {
+        type: Number,
+      },
+    ],
+    signPosition: {
+      type: String,
+      enum: ["bottom-left", "top-left", "top-right", "bottom-right", "bottom-center", "top-center", "middle-center", "middle-left", "middle-right"],
+    },
+  },
+  stampedDocumentUrl: {
+    pdf: {
+      type: String,
+    },
+    public_id: {
+      type: String,
+    },
+  },
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model("Meeting", meetingSchema);
