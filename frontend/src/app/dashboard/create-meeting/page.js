@@ -39,7 +39,7 @@ const Page = () => {
 
     const parsedUser = JSON.parse(u);
     setUser(parsedUser);
-    // console.log("parsedUser",parsedUser)
+    console.log("parsedUser",parsedUser)
 
     setSignatories([
       {
@@ -366,7 +366,7 @@ const Page = () => {
                   }
                   className="border rounded px-3 py-2 w-full"
                 >
-                  <option value="bottom-right">Bottom Right</option>
+                  {/* <option value="bottom-right">Bottom Right</option> */}
                   {/* <option value="top-left">Top Left</option>
                   <option value="top-center">Top Center</option>
                   <option value="top-right">Top Right</option>
