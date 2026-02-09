@@ -154,10 +154,18 @@ const Page = () => {
     try {
       toast.loading('Processing...', { toastId: 'signer' })
 
-      // 1️⃣ Try to add signer
-      await api.post(`/api/meeting/adv-sign-detail/${id}`, signerForm)
+      // 1️⃣ Add signer
+      const addSignerRes = await api.post(
+        `/api/meeting/adv-sign-detail/${id}`,
+        signerForm
+      )
 
-      // 2️⃣ If success → send document
+      // ✅ success true hone par hi next API
+      if (addSignerRes.data?.success === true) {
+        await api.post(`/api/meeting/sign-document-for-notary/${id}`)
+      }
+
+      // 2️⃣ Send document for sign
       await api.post(`/api/meeting/send-document-for-sign/${id}`)
 
       toast.update('signer', {
@@ -173,10 +181,9 @@ const Page = () => {
       const status = err.response?.status
       const message = err.response?.data?.message
 
-      // 🔥 IMPORTANT PART
+      // 🔥 signer already exists case
       if (status === 400 && message === 'Signer already exists') {
         try {
-          // 👉 signer already hai, sirf document bhejo
           await api.post(`/api/meeting/send-document-for-sign/${id}`)
 
           toast.update('signer', {
@@ -614,11 +621,11 @@ const Page = () => {
               className="w-full border p-2 mb-4 rounded"
             >
               <option value="bottom-left">Bottom Left</option>
-              <option value="top-left">Top Left</option>
-              <option value="top-right">Top Right</option>
               <option value="bottom-right">Bottom Right</option>
               <option value="bottom-center">Bottom Center</option>
-              <option value="center">Center</option>
+              {/*<option value="top-left">Top Left</option>
+              <option value="top-right">Top Right</option>
+              <option value="center">Center</option>*/}
             </select>
 
             {/* ACTIONS */}

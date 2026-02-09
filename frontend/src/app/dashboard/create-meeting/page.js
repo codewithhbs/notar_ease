@@ -366,13 +366,13 @@ const Page = () => {
                   }
                   className="border rounded px-3 py-2 w-full"
                 >
-                  {/* <option value="bottom-right">Bottom Right</option> */}
-                  <option value="top-left">Top Left</option>
+                  <option value="bottom-right">Bottom Right</option>
+                  {/* <option value="top-left">Top Left</option>
                   <option value="top-center">Top Center</option>
                   <option value="top-right">Top Right</option>
                   <option value="middle-left">Middle Left</option>
                   <option value="middle-center">Middle Center</option>
-                  <option value="middle-right">Middle Right</option>
+                  <option value="middle-right">Middle Right</option> */}
                   <option value="bottom-left">Bottom Left</option>
                   <option value="bottom-center">Bottom Center</option>
                 </select>

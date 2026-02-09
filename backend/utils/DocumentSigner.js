@@ -42,71 +42,22 @@ async function pdfUrlToBase64(pdfUrl) {
     return Buffer.from(res.data).toString("base64");
 }
 
-function getPositionCoordinates(position, pageWidth, pageHeight) {
-    const marginX = pageWidth * 0.05;   // 5% margin
-    const marginY = pageHeight * 0.05;
+function getPositionCoordinates(position) {
+    const map = {
+        "top-left": { Left: 7, Top: 760 },
+        "top-center": { Left: 245, Top: 760 },
+        "top-right": { Left: 390, Top: 760 },
 
-    switch (position) {
-        // 🔼 TOP
-        case "top-left":
-            return { Left: marginX, Top: marginY };
+        "middle-left": { Left: 7, Top: 396 },
+        "middle-center": { Left: 245, Top: 396 },
+        "middle-right": { Left: 390, Top: 396 },
 
-        case "top-center":
-            return {
-                Left: pageWidth / 2 - 100,
-                Top: marginY,
-            };
+        "bottom-left": { Left: 7, Top: 65 },
+        "bottom-center": { Left: 245, Top: 65 },
+        "bottom-right": { Left: 390, Top: 65 },
+    };
 
-        case "top-right":
-            return {
-                Left: pageWidth - marginX - 200,
-                Top: marginY,
-            };
-
-        // ⏺️ MIDDLE
-        case "middle-left":
-            return {
-                Left: marginX,
-                Top: pageHeight / 2 - 25,
-            };
-
-        case "middle-center":
-            return {
-                Left: pageWidth / 2 - 100,
-                Top: pageHeight / 2 - 25,
-            };
-
-        case "middle-right":
-            return {
-                Left: pageWidth - marginX - 200,
-                Top: pageHeight / 2 - 25,
-            };
-
-        // 🔽 BOTTOM
-        case "bottom-left":
-            return {
-                Left: marginX,
-                Top: pageHeight - marginY - 50,
-            };
-
-        case "bottom-center":
-            return {
-                Left: pageWidth / 2 - 100,
-                Top: pageHeight - marginY - 50,
-            };
-
-        case "bottom-right":
-            return {
-                Left: pageWidth - marginX - 200,
-                Top: pageHeight - marginY - 50,
-            };
-
-        default:
-            return {
-                Left: pageWidth - marginX - 200,
-                Top: pageHeight - marginY - 50,
-            };
-    }
+    return map[position] || map["bottom-right"];
 }
 
 async function buildSigningPayload(meeting) {
@@ -125,11 +76,11 @@ async function buildSigningPayload(meeting) {
     const pageSizes = await getPdfPageSizes(pdfRes.data);
     let signMode;
 
-    if(meeting.signingMode === 'adhaarESign'){
+    if (meeting.signingMode === 'adhaarESign') {
         signMode = "12";
-    } else if(meeting.signingMode === 'dsc'){
+    } else if (meeting.signingMode === 'dsc') {
         signMode = "1";
-    } else if(meeting.signingMode === 'NEKYC'){
+    } else if (meeting.signingMode === 'NEKYC') {
         signMode = "3";
     }
 
@@ -154,10 +105,9 @@ async function buildSigningPayload(meeting) {
             if (!page) return;
 
             const pos = getPositionCoordinates(
-                signer.signPosition,
-                page.width,
-                page.height
+                signer.signPosition
             );
+
 
             controlDetails.push({
                 PageNo: String(pageNo),
@@ -165,9 +115,14 @@ async function buildSigningPayload(meeting) {
                 AssignedTo: index + 1,
                 Left: Math.round(pos.Left),
                 Top: Math.round(pos.Top),
-                Width: 200,
-                Height: 50,
+
+                // ✅ FIXED SIGNATURE SIZE
+                Width: 110,
+                Height: 40,
+
             });
+
+
         });
     });
 
@@ -203,7 +158,7 @@ async function initiateDocumentSigning(meeting) {
             },
         });
 
-        console.log("res.data",res.data)
+        console.log("res.data", res.data)
 
         return res.data;
     } catch (err) {

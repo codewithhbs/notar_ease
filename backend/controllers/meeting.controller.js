@@ -1086,8 +1086,8 @@ async function doStampDuty(req, res) {
       });
     }
 
-    // const pdfUrl = meeting?.signedDocumentUrl;
-    const pdfUrl = 'https://res.cloudinary.com/duxsqzrot/image/upload/v1769852947/dummy_cb9sqa.pdf';
+    const pdfUrl = meeting?.documentUrl?.pdf;
+    // const pdfUrl = 'https://res.cloudinary.com/duxsqzrot/image/upload/v1769852947/dummy_cb9sqa.pdf';
     if (!pdfUrl) {
       return res.status(400).json({
         success: false,
@@ -1108,13 +1108,13 @@ async function doStampDuty(req, res) {
     const pdfDoc = await PDFDocument.load(pdfResponse.data);
 
     // 2️⃣ Load stamp image
-    const stampPath = path.join(process.cwd(), "public/stamp.jpg");
+    const stampPath = path.join(process.cwd(), "public/stamp.png");
     const stampBytes = fs.readFileSync(stampPath);
-    const stampImage = await pdfDoc.embedJpg(stampBytes);
-    // const stampImage = await pdfDoc.embedPng(stampBytes);
+    // const stampImage = await pdfDoc.embedJpg(stampBytes);
+    const stampImage = await pdfDoc.embedPng(stampBytes);
 
-    const stampWidth = 120;
-    const stampHeight = 90;
+    const stampWidth = 110;
+    const stampHeight = 110;
 
     // 3️⃣ Apply stamp on given pages
     for (let pageIndex of PageNo) {
@@ -1140,6 +1140,11 @@ async function doStampDuty(req, res) {
 
     // 5️⃣ Upload to Cloudinary
     const uploaded = await uploadPDF(stampedPdfBuffer);
+
+    meeting.documentUrl = {
+      pdf: uploaded.pdf,
+      public_id: uploaded.public_id
+    }
 
     // 6️⃣ Save in meeting
     meeting.stampedDocumentUrl = {
