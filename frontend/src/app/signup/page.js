@@ -8,6 +8,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+// const API_BASE =
+//   process.env.NEXT_PUBLIC_API_BASE_URL || "https://www.api.ommdocumentation.com";
 
 export default function Page() {
   const router = useRouter();
@@ -50,7 +52,7 @@ export default function Page() {
     setLoading(true);
 
     try {
-      // const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
       const payload = {
         name: formData.name,
@@ -63,7 +65,7 @@ export default function Page() {
       };
 
       // NOTE: not using withCredentials because you're not using cookies right now
-      const res = await axios.post(`/api/auth/register`, payload, {
+      const res = await axios.post(`${API_BASE}/api/auth/register`, payload, {
         timeout: 15000,
       });
 
