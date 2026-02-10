@@ -266,7 +266,7 @@ const Page = () => {
                   id={`name-${i}`}
                   placeholder="Name"
                   value={s.name}
-                  disabled={s.isDefault}
+                  // disabled={s.isDefault}
                   onChange={(e) => updateSignatory(i, "name", e.target.value)}
                   className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
                 />
@@ -284,7 +284,7 @@ const Page = () => {
                   id={`email-${i}`}
                   placeholder="Email"
                   value={s.email}
-                  disabled={s.isDefault}
+                  // disabled={s.isDefault}
                   onChange={(e) => updateSignatory(i, "email", e.target.value)}
                   className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
                 />
@@ -303,7 +303,7 @@ const Page = () => {
                   type="tel"
                   placeholder="Mobile No"
                   value={s.MobileNo}
-                  disabled={s.isDefault}
+                  // disabled={s.isDefault}
                   onChange={(e) => updateSignatory(i, "MobileNo", e.target.value)}
                   className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
                 />
