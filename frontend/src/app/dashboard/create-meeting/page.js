@@ -39,7 +39,7 @@ const Page = () => {
 
     const parsedUser = JSON.parse(u);
     setUser(parsedUser);
-    console.log("parsedUser",parsedUser)
+    console.log("parsedUser", parsedUser)
 
     setSignatories([
       {
@@ -152,12 +152,15 @@ const Page = () => {
 
       fd.append("documentUrl", pdfFile);
 
-      await api.post("/api/meeting/create", fd, {
+      const res = await api.post("/api/meeting/create", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      const meetingId = res?.data?.meeting?._id;
+
       toast.success("Meeting created successfully");
-      window.location.href = "/dashboard";
+      window.location.href = `/dashboard/schedule/${meetingId}`;
+
     } catch (err) {
       console.log("Internal server error", err)
       toast.error(err.response?.data?.message || "Server error");

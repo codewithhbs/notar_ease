@@ -44,17 +44,17 @@ async function pdfUrlToBase64(pdfUrl) {
 
 function getPositionCoordinates(position) {
     const map = {
-        "top-left": { Left: 7, Top: 760 },
-        "top-center": { Left: 245, Top: 760 },
-        "top-right": { Left: 390, Top: 760 },
+        "top-left": { Left: 7, Top: 760, Width: 390, Height: 65 },
+        "top-center": { Left: 245, Top: 760, Width: 390, Height: 65 },
+        "top-right": { Left: 390, Top: 760, Width: 390, Height: 65 },
 
-        "middle-left": { Left: 7, Top: 396 },
-        "middle-center": { Left: 245, Top: 396 },
-        "middle-right": { Left: 390, Top: 396 },
+        "middle-left": { Left: 20, Top: 452, Width: 140, Height: 377 },
+        "middle-center": { Left: 246, Top: 451, Width: 366, Height: 376 },
+        "middle-right": { Left: 468, Top: 451, Width: 588, Height: 376 },
 
-        "bottom-left": { Left: 7, Top: 65 },
-        "bottom-center": { Left: 245, Top: 65 },
-        "bottom-right": { Left: 390, Top: 65 },
+        "bottom-left": { Left: 59, Top: 149, Width: 179, Height: 57 },
+        "bottom-center": { Left: 210, Top: 144, Width: 346, Height: 52 },
+        "bottom-right": { Left: 396, Top: 162, Width: 541, Height: 69 },
     };
 
     return map[position] || map["bottom-right"];
@@ -115,11 +115,8 @@ async function buildSigningPayload(meeting) {
                 AssignedTo: index + 1,
                 Left: Math.round(pos.Left),
                 Top: Math.round(pos.Top),
-
-                // ✅ FIXED SIGNATURE SIZE
-                Width: 110,
-                Height: 40,
-
+                Width: Math.round(pos.Width),
+                Height: Math.round(pos.Height),
             });
 
 

@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
   const otpRefs = useRef([]);
 
   const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.ommdocumentation.com';
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.api.ommdocumentation.com';
 
   /* ================= TIMER ================= */
   useEffect(() => {

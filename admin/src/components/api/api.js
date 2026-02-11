@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "https://api.ommdocumentation.com";
+  import.meta.env.VITE_API_BASE_URL || "https://www.api.ommdocumentation.com";
 
 const api = axios.create({
   baseURL: API_BASE,
