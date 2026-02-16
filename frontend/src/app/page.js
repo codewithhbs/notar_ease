@@ -560,7 +560,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Hero Heading */}
+      {/* ---------------- HERO ---------------- */}
+
       <section className="bg-linear-to-b from-indigo-50 to-white py-15">
         <div className="container mx-auto px-6 text-center">
           <motion.h1
@@ -570,24 +571,26 @@ export default function Home() {
           >
             Simple & Transparent Pricing
           </motion.h1>
-          <p className="text-xl md:text-xl text-gray-700 max-w-4xl mx-auto">
-            Choose the method that works best for you. Limited-time 50% OFF on
-            Aadhaar e-Sign & NE-KYC!
+
+          <p className="text-xl text-gray-700 max-w-4xl mx-auto">
+            Choose the method that works best for you.
           </p>
 
-          <div className="mt-10 inline-flex items-center gap-3 bg-green-100 text-green-800 px-6 py-3 md:rounded-full text-lg font-semibold">
+          <div className="mt-10 inline-flex items-center gap-3 bg-green-100 text-green-800 px-6 py-3 rounded-full text-lg font-semibold">
             <Shield className="w-6 h-6" />
-            Omm Documentation is India's only trusted platform whose eNotarised
-            documents have been accepted by courts in India.
+            Court-accepted eNotarised documents platform.
           </div>
         </div>
       </section>
 
-      {/* Pricing Cards */}
+      {/* ---------------- PRICING CARDS ---------------- */}
+
       <section className="py-10 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
-            {/* Plan 1: Aadhaar e-Sign (Most Popular) */}
+
+            {/* -------- Aadhaar -------- */}
+
             <motion.div
               whileHover={{ y: -10 }}
               className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-indigo-600"
@@ -595,29 +598,21 @@ export default function Home() {
               <div className="absolute top-0 right-0 bg-indigo-600 text-white px-6 py-2 rounded-bl-2xl font-bold">
                 MOST POPULAR
               </div>
+
               <div className="p-10 text-center">
                 <h3 className="text-2xl font-bold text-indigo-700 mb-2">
                   Aadhaar e-Sign
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  For Indian residents with Aadhaar
-                </p>
 
                 <div className="mb-6">
                   <span className="text-5xl font-extrabold text-indigo-600">
                     ₹1,000
                   </span>
-                  <span className="text-xl text-gray-500 line-through ml-3">
-                    ₹2,000
-                  </span>
-                  <div className="mt-3 bg-red-100 text-red-700 px-4 py-1 rounded-full inline-block text-sm font-bold">
-                    50% OFF (Limited Time)
-                  </div>
                 </div>
 
                 <ul className="space-y-4 text-left mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />{" "}
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                     Mobile-linked Aadhaar required
                   </li>
                   <li className="flex items-start gap-3">
@@ -626,47 +621,44 @@ export default function Home() {
                   </li>
                 </ul>
 
+                {/* Page Addon Text */}
                 <h4 className="font-bold text-lg mb-4">
-                  Additional Signatories
+                  Page Add-on Charges
                 </h4>
+
                 <ul className="text-sm text-gray-600 space-y-2 mb-8">
-                  <li>• Up to 2 signatories: ₹1,000</li>
-                  <li>• Up to 4 signatories: ₹1,500</li>
-                  <li>• Up to 9 signatories: ₹3,000</li>
+                  <li>• Price includes 1 PDF page</li>
+                  <li>• Every additional page costs ₹100</li>
+                  <li>• Charges auto-added based on total pages</li>
                 </ul>
 
                 <a
                   href="/"
-                  className="block w-full bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold py-5 rounded-xl hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-3"
+                  className="block w-full bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold py-5 rounded-xl flex justify-center gap-3"
                 >
-                  Get Started <ArrowRight className="w-6 h-6" />
+                  Get Started <ArrowRight />
                 </a>
               </div>
             </motion.div>
 
-            {/* Plan 2: DSC */}
+            {/* -------- DSC -------- */}
+
             <motion.div
               whileHover={{ y: -10 }}
               className="bg-white rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="p-10 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">DSC</h3>
-                <p className="text-gray-600 mb-6">
-                  Digital Signature Certificate
-                </p>
+                <h3 className="text-2xl font-bold mb-2">DSC</h3>
 
-                <div className="mb-10">
-                  <span className="text-5xl font-extrabold text-gray-900">
-                    ₹5,000
-                  </span>
-                  <span className="text-sm text-gray-500 block mt-2">
-                    per appointment
+                <div className="mb-6">
+                  <span className="text-5xl font-extrabold">
+                    ₹3,000
                   </span>
                 </div>
 
                 <ul className="space-y-4 text-left mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />{" "}
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                     USB-based DSC required
                   </li>
                   <li className="flex items-start gap-3">
@@ -676,58 +668,48 @@ export default function Home() {
                 </ul>
 
                 <h4 className="font-bold text-lg mb-4">
-                  Additional Signatories
+                  Page Add-on Charges
                 </h4>
+
                 <ul className="text-sm text-gray-600 space-y-2 mb-8">
-                  <li>• Up to 2 signatories: ₹5,000</li>
-                  <li>• Up to 4 signatories: ₹6,000</li>
-                  <li>• Up to 9 signatories: ₹8,000</li>
+                  <li>• Price includes 1 PDF page</li>
+                  <li>• Every additional page costs ₹100</li>
+                  <li>• Charges auto-added based on total pages</li>
                 </ul>
 
                 <a
                   href="/"
-                  className="block w-full bg-gray-900 text-white font-bold py-5 rounded-xl hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-3"
+                  className="block w-full bg-gray-900 text-white font-bold py-5 rounded-xl flex justify-center gap-3"
                 >
-                  Get Started <ArrowRight className="w-6 h-6" />
+                  Get Started <ArrowRight />
                 </a>
               </div>
             </motion.div>
 
-            {/* Plan 3: NE-KYC (International) */}
+            {/* -------- NE-KYC -------- */}
+
             <motion.div
               whileHover={{ y: -10 }}
-              className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-green-500"
+              className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-green-500"
             >
-              <div className="absolute top-0 right-0 bg-green-600 text-white px-6 py-2 rounded-bl-2xl font-bold">
-                50% OFF
-              </div>
               <div className="p-10 text-center">
-                <h3 className="text-2xl font-bold text-green-700 mb-2 flex items-center justify-center gap-2">
-                  <Globe className="w-8 h-8" /> NE-KYC
+                <h3 className="text-2xl font-bold text-green-700 mb-2 flex justify-center gap-2">
+                  <Globe /> NE-KYC
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  For international users (NRIs)
-                </p>
 
                 <div className="mb-6">
                   <span className="text-5xl font-extrabold text-green-600">
-                    $100
+                    $35
                   </span>
-                  <span className="text-xl text-gray-500 line-through ml-3">
-                    $200
-                  </span>
-                  <div className="mt-3 bg-red-100 text-red-700 px-4 py-1 rounded-full inline-block text-sm font-bold">
-                    50% OFF (Limited Time)
-                  </div>
                 </div>
 
                 <ul className="space-y-4 text-left mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />{" "}
-                    Passport required (Aadhaar not needed)
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    Passport required
                   </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />{" "}
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                     KYC video meeting
                   </li>
                   <li className="flex items-start gap-3">
@@ -736,11 +718,21 @@ export default function Home() {
                   </li>
                 </ul>
 
+                <h4 className="font-bold text-lg mb-4">
+                  Page Add-on Charges
+                </h4>
+
+                <ul className="text-sm text-gray-600 space-y-2 mb-8">
+                  <li>• Price includes 1 PDF page</li>
+                  <li>• Every additional page costs USD $1</li>
+                  <li>• Charges auto-added based on total pages</li>
+                </ul>
+
                 <a
                   href="/"
-                  className="block w-full bg-linear-to-r from-green-600 to-emerald-700 text-white font-bold py-5 rounded-xl hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-3"
+                  className="block w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white font-bold py-5 rounded-xl flex justify-center gap-3"
                 >
-                  Get Started <ArrowRight className="w-6 h-6" />
+                  Get Started <ArrowRight />
                 </a>
               </div>
             </motion.div>
@@ -888,8 +880,8 @@ export default function Home() {
                       key={idx}
                       onClick={() => setCurrentIndex(idx * 2)}
                       className={`transition-all duration-300 rounded-full ${Math.floor(currentIndex / 2) === idx
-                          ? "w-10 h-3 bg-indigo-600"
-                          : "w-3 h-3 bg-gray-300 hover:bg-gray-400"
+                        ? "w-10 h-3 bg-indigo-600"
+                        : "w-3 h-3 bg-gray-300 hover:bg-gray-400"
                         }`}
                     />
                   ))}

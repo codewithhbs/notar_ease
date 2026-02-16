@@ -242,6 +242,7 @@ async function createMeeting(req, res) {
             : "bottom-left",
 
           idProof: idProofData,
+          signingMode:signingMode
         };
       })
     );
@@ -255,27 +256,37 @@ async function createMeeting(req, res) {
     let currency = "INR";
 
     if (signingMode === "adhaarESign") {
-      if (signatoryCount <= 2) amount = 1000;
-      else if (signatoryCount <= 4) amount = 1500;
-      else if (signatoryCount <= 9) amount = 3000;
-      else {
-        return res.status(400).json({
-          success: false,
-          message: "Maximum 9 signatories allowed for Aadhaar eSign",
-        });
+      amount = 1000 * signatoryCount;
+      if (totalPdfPages > 1) {
+        const additionalPages = totalPdfPages * 100;
+        amount = amount + additionalPages;
       }
+      // if (signatoryCount <= 2) amount = 1000 ;
+      // else if (signatoryCount <= 4) amount = 1500;
+      // else if (signatoryCount <= 9) amount = 3000;
+      // else {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Maximum 9 signatories allowed for Aadhaar eSign",
+      //   });
+      // }
     }
 
     if (signingMode === "dsc") {
-      if (signatoryCount <= 2) amount = 5000;
-      else if (signatoryCount <= 4) amount = 6000;
-      else if (signatoryCount <= 9) amount = 8000;
-      else {
-        return res.status(400).json({
-          success: false,
-          message: "Maximum 9 signatories allowed for DSC",
-        });
+      amount = 3000 * signatoryCount;
+      if(totalPdfPages > 1) {
+        const additionalPages = totalPdfPages * 100;
+        amount = amount + additionalPages;
       }
+      // if (signatoryCount <= 2) amount = 5000;
+      // else if (signatoryCount <= 4) amount = 6000;
+      // else if (signatoryCount <= 9) amount = 8000;
+      // else {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Maximum 9 signatories allowed for DSC",
+      //   });
+      // }
     }
 
     if (signingMode === "NEKYC") {
@@ -484,7 +495,7 @@ async function updateTimeSlot(req, res) {
     if (meeting.isPaid === false) {
       return res.status(400).json({ success: false, message: "Meeting is not paid" });
     }
-    console.log("timeSlotId", timeSlotId)
+    // console.log("timeSlotId", timeSlotId)
     const timeSlot = await AdvocateTimeSlotModel.findById(timeSlotId);
     if (!timeSlot) {
       return res.status(404).json({ success: false, message: "Time slot not found" });
@@ -522,6 +533,8 @@ async function updateTimeSlot(req, res) {
       });
     }
 
+    timeSlot.isBooked = true;
+
     meeting.meetLink = meetLink;
     meeting.startTime = startDateTime;
     meeting.endTime = endDateTime;
@@ -534,6 +547,7 @@ async function updateTimeSlot(req, res) {
       end: meeting.endTime,
     });
 
+    await timeSlot.save();
     await meeting.save();
 
     /* ===============================
@@ -745,7 +759,8 @@ async function advSignDetail(req, res) {
       DOB,
       Gender,
       PageNo,
-      signPosition
+      signPosition,
+      signingMode
     } = req.body;
 
     const meeting = await Meeting.findById(id);
@@ -778,12 +793,12 @@ async function advSignDetail(req, res) {
     }
 
     const cleanPageNo = [
-  ...new Set(
-    (Array.isArray(PageNo) ? PageNo : [PageNo])
-      .map(Number)
-      .filter(n => !isNaN(n))
-  )
-];
+      ...new Set(
+        (Array.isArray(PageNo) ? PageNo : [PageNo])
+          .map(Number)
+          .filter(n => !isNaN(n))
+      )
+    ];
 
     // ✅ Create signer object
     const signer = {
@@ -795,6 +810,7 @@ async function advSignDetail(req, res) {
       Gender,
       PageNo: cleanPageNo,
       signPosition,
+      signingMode
     };
 
     // ➕ Push signer
@@ -809,6 +825,7 @@ async function advSignDetail(req, res) {
       MobileNo,
       PageNo,
       signPosition,
+      signingMode
     };
 
     await meeting.save();
@@ -868,7 +885,7 @@ async function sendDocumentForSign(req, res) {
       });
     }
 
-    console.log("response",response.Response)
+    console.log("response", response.Response)
 
     const {
       WorkflowId,

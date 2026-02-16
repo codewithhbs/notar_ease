@@ -16,6 +16,10 @@ const advocateTimeSlotSchema = new mongoose.Schema({
     endTime: {
         type: String,
         required: true
+    },
+    isBooked: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true })
 

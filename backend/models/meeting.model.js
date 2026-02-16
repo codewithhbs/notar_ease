@@ -17,6 +17,11 @@ const signerSchema = new mongoose.Schema({
     enum: ["bottom-left", "top-left", "top-right", "bottom-right", "bottom-center", "top-center", "middle-center", "middle-left", "middle-right"],
     default: "bottom-left",
   },
+  signingMode: {
+    type: String,
+    enum: ["adhaarESign", "dsc", "NEKYC"],
+    default: "adhaarESign",
+  },
   idProof: {
     image: {
       type: String,
@@ -165,6 +170,10 @@ const meetingSchema = new mongoose.Schema({
       type: String,
       enum: ["bottom-left", "top-left", "top-right", "bottom-right", "bottom-center", "top-center", "middle-center", "middle-left", "middle-right"],
     },
+    signingMode: {
+      type: String,
+      enum: ["adhaarESign", "dsc", "NEKYC"],
+    },
   },
   stampedDocumentUrl: {
     pdf: {
@@ -174,7 +183,7 @@ const meetingSchema = new mongoose.Schema({
       type: String,
     },
   },
-  
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Meeting", meetingSchema);

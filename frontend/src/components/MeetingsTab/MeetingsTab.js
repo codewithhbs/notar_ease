@@ -102,13 +102,13 @@ export default function MeetingsTab({ openModal }) {
     ended: {
       user: {
         label: "Meeting Ended",
-        href: null,
-        className: "bg-gray-400",
+        href: (id) => `/dashboard/view-meeting/${id}`,
+        className: "bg-red-700 hover:bg-red-800",
       },
       notary: {
         label: "Meeting Ended",
-        href: null,
-        className: "bg-gray-400",
+        href: (id) => `/dashboard/view-meeting/${id}`,
+        className: "bg-red-700 hover:bg-red-800",
       },
     },
 
@@ -237,7 +237,7 @@ export default function MeetingsTab({ openModal }) {
                       if (!roleConfig.href) {
                         return (
                           <button
-                            disabled
+                            
                             className={`
           px-6 py-2.5 rounded-lg
           text-white font-medium

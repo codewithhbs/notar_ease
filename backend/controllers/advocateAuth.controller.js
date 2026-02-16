@@ -266,6 +266,9 @@ async function getAllTimeSlots(req, res) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // ✅ Current date & time
+        const now = new Date();
+
         // ✅ Step 1: Find all admin advocates
         const adminAdvocates = await User.find(
             { role: "admin" },
@@ -277,14 +280,34 @@ async function getAllTimeSlots(req, res) {
         // ✅ Step 2: Fetch time slots EXCLUDING admin advocates
         const timeSlotsRaw = await AdvocateTimeSlot.find({
             date: { $gte: today },
-            advocateId: { $nin: adminIds }, // 🔥 MAIN CONDITION
+            advocateId: { $nin: adminIds },
+            isBooked: { $ne: false }, // 🔥 condition 1 (false wale remove)
         })
             .populate("advocateId", "name familyName email role")
             .sort({ date: 1, startTime: 1 });
 
+        // ✅ Filter today's past time slots
+        const filteredByTime = timeSlotsRaw.filter(slot => {
+            const slotDate = new Date(slot.date);
+
+            // 👉 If slot is today → check time
+            if (slotDate.toDateString() === now.toDateString()) {
+                const [hours, minutes] = slot.startTime.split(":");
+
+                const slotDateTime = new Date(slotDate);
+                slotDateTime.setHours(hours, minutes, 0, 0);
+
+                if (now >= slotDateTime) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
         // ✅ Remove duplicate slots
         const seen = new Set();
-        const timeSlots = timeSlotsRaw.filter(slot => {
+        const timeSlots = filteredByTime.filter(slot => {
             const key = `${slot.date.toISOString().split("T")[0]}-${slot.startTime}-${slot.endTime}`;
             if (seen.has(key)) return false;
             seen.add(key);
@@ -302,6 +325,7 @@ async function getAllTimeSlots(req, res) {
             success: true,
             timeSlots,
         });
+
     } catch (error) {
         console.error("Internal server error", error);
         return res.status(500).json({
@@ -373,7 +397,6 @@ async function checkTimeSlotAvailability(req, res) {
         });
     }
 }
-
 
 module.exports = {
     register,

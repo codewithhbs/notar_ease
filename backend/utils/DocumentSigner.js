@@ -75,17 +75,17 @@ async function buildSigningPayload(meeting) {
     // 2️⃣ Get page sizes
     const pageSizes = await getPdfPageSizes(pdfRes.data);
     let signMode;
-
-    if (meeting.signingMode === 'adhaarESign') {
-        signMode = "12";
-    } else if (meeting.signingMode === 'dsc') {
-        signMode = "1";
-    } else if (meeting.signingMode === 'NEKYC') {
-        signMode = "3";
-    }
-
+    
     meeting.signatories.forEach((signer, index) => {
         signatoryEmails.push(signer.email);
+        
+            if (signer.signingMode === 'adhaarESign') {
+                signMode = "12";
+            } else if (signer.signingMode === 'dsc') {
+                signMode = "1";
+            } else if (signer.signingMode === 'NEKYC') {
+                signMode = "3";
+            }
 
         signatureSettings.push({
             ModeOfSignature: signMode,

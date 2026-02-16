@@ -25,6 +25,7 @@ const Page = () => {
     PageNo: [],          // 👈 backend ke liye
     pageInput: '',       // 👈 UI ke liye ( "1,2,3" )
     signPosition: 'bottom-right',
+    signingMode: 'adhaarESign',
   })
 
   const formatMeetingDate = (date) => {
@@ -583,6 +584,21 @@ const Page = () => {
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
+
+            {/* SIGNING MODE */}
+            <select
+              value={signerForm.signingMode}
+              onChange={e =>
+                setSignerForm({ ...signerForm, signingMode: e.target.value })
+              }
+              className="w-full border p-2 mb-3 rounded"
+            >
+              <option value="adhaarESign">Aadhaar eSign</option>
+              <option value="dsc">DSC</option>
+              <option value="NEKYC">NEKYC</option>
+              <option value="NEKYC">E-Sign</option>
+            </select>
+
 
             {/* PAGE NO */}
             <input
