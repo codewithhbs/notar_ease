@@ -281,7 +281,7 @@ async function getAllTimeSlots(req, res) {
         const timeSlotsRaw = await AdvocateTimeSlot.find({
             date: { $gte: today },
             advocateId: { $nin: adminIds },
-            isBooked: { $ne: false }, // 🔥 condition 1 (false wale remove)
+           isBooked: false, // 🔥 condition 1 (false wale remove)
         })
             .populate("advocateId", "name familyName email role")
             .sort({ date: 1, startTime: 1 });

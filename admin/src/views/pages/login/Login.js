@@ -19,6 +19,9 @@ import { cilLockLocked, cilUser } from '@coreui/icons';
 import toast from 'react-hot-toast';
 import api from '../../../components/api/api';
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:4022";
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -37,7 +40,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('https://www.api.ommdocumentation.com/api/admin/admin-login', formData);
+      const res = await axios.post(`${API_BASE}/api/admin/admin-login`, formData);
       // console.log('Response:', res.data);
 
       const { accessToken, refreshToken, sessionId, user } = res.data;

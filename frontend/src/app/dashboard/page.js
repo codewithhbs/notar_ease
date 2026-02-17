@@ -129,7 +129,7 @@ export default function Page() {
                       : "hover:bg-gray-100 text-gray-700"
                       }`}
                   >
-                    <User className="w-5 h-5" /> Time Slote
+                    <User className="w-5 h-5" /> Time Slots
                   </button>
                   {/* <button
                     onClick={() => handleMobileTabChange("profile")}
@@ -197,7 +197,7 @@ export default function Page() {
                     : "hover:bg-gray-100 text-gray-700"
                     }`}
                 >
-                  <Calendar className="w-5 h-5" /> Time Slote
+                  <Calendar className="w-5 h-5" /> Time Slots
                 </button>
                 {/* <button
                   onClick={() => handleTabChange("slots")}
