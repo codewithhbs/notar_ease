@@ -38,7 +38,7 @@ const upload = multer({
 
 router.post('/add-time-slot',authenticateAccessToken,authorizeRoles("notary", "admin"), AdvocateTimeSlot.addTimeSlot);
 router.get('/get-time-slot',authenticateAccessToken,authorizeRoles('notary', 'admin'), AdvocateTimeSlot.getAdvocateTimeSlot);``
-router.get('/get-admin-time-slot',authenticateAccessToken, AdvocateTimeSlot.getAdminTimeSlot);
+router.get('/get-admin-time-slot', AdvocateTimeSlot.getAdminTimeSlot);
 router.get('/get-all-time-slots',authenticateAccessToken,authorizeRoles('user', 'notary'), AdvocateTimeSlot.getAllTimeSlots);
 router.post('/check-slot', authenticateAccessToken,authorizeRoles('user', 'notary'), AdvocateTimeSlot.checkTimeSlotAvailability);
 router.delete('/delete-time-slot/:id',authenticateAccessToken,authorizeRoles('notary', 'admin'), AdvocateTimeSlot.deleteAdvocateTimeSlot);
