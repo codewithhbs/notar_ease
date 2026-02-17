@@ -104,6 +104,15 @@ export default function Home() {
     testimonials[(currentIndex + 1) % testimonials.length],
   ];
 
+  const handleRedirect = () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+    window.location.href = '/dashboard';
+  };
+
   return (
     <>
       <section className="relative overflow-hidden bg-linear-to-br from-indigo-50 via-white to-blue-50">
@@ -192,7 +201,8 @@ export default function Home() {
               transition={{ delay: 0.9, duration: 0.6 }}
               className="mt-16 flex flex-col sm:flex-row gap-5 justify-center items-center"
             >
-              <button onClick={() => setOpenDemo(true)} className="group relative px-10 py-5 bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-indigo-600/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+              {/* <button onClick={() => setOpenDemo(true)} className="group relative px-10 py-5 bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-indigo-600/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"> */}
+              <button onClick={() => handleRedirect()} className="group relative px-10 py-5 bg-linear-to-r from-indigo-600 to-blue-700 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-indigo-600/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden">
                 <span className="relative z-10">Book Appointment</span>
                 <ArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition" />
                 <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
