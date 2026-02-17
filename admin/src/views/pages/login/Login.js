@@ -37,7 +37,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('https://www.api.ommdocumentation.comapi/admin/admin-login', formData);
+      const res = await axios.post('https://www.api.ommdocumentation.com/api/admin/admin-login', formData);
       // console.log('Response:', res.data);
 
       const { accessToken, refreshToken, sessionId, user } = res.data;
