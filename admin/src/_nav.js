@@ -32,7 +32,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Advocate Time Slot',
+    name: 'Admin Time Slots',
     to: '/admin/all-time-slots',
     icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
   },
