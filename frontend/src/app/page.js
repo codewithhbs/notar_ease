@@ -110,7 +110,7 @@ export default function Home() {
       window.location.href = '/login';
       return;
     }
-    window.location.href = '/dashboard';
+    window.location.href = '/dashboard/create-meeting';
   };
 
   return (
