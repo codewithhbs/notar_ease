@@ -20,7 +20,7 @@ import toast from 'react-hot-toast';
 import api from '../../../components/api/api';
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:4022";
+  import.meta.env.VITE_API_BASE_URL || "https://www.api.ommdocumentation.com";
 
 const Login = () => {
   const [formData, setFormData] = useState({
