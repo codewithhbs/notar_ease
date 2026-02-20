@@ -355,7 +355,7 @@ const Page = () => {
 
               {/* Sign Position + Remove */}
               <div className="space-y-1">
-                <label
+                {/* <label
                   htmlFor={`position-${i}`}
                   className="text-xs font-medium text-gray-600"
                 >
@@ -369,16 +369,71 @@ const Page = () => {
                   }
                   className="border rounded px-3 py-2 w-full"
                 >
-                  {/* <option value="bottom-right">Bottom Right</option> */}
-                  {/* <option value="top-left">Top Left</option>
-                  <option value="top-center">Top Center</option>
-                  <option value="top-right">Top Right</option>
-                  <option value="middle-left">Middle Left</option>
-                  <option value="middle-center">Middle Center</option>
-                  <option value="middle-right">Middle Right</option> */}
                   <option value="bottom-left">Bottom Left</option>
                   <option value="bottom-center">Bottom Center</option>
-                </select>
+                </select> */}
+
+                {/* ID Proof Upload */}
+              <div className="space-y-1">
+                {/* Dynamic Label */}
+                <label className="text-xs font-medium text-gray-600">
+                  {form.signingMode === "NEKYC"
+                    ? "Passport (Image / PDF)"
+                    : form.signingMode === "dsc"
+                      ? "DSC Certificate (Image / PDF)"
+                      : "Aadhaar Card (Image / PDF)"}
+                </label>
+
+                {/* File Input */}
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // ✅ Allow image OR pdf
+                    const isImage = file.type.startsWith("image/");
+                    const isPdf = file.type === "application/pdf";
+
+                    if (!isImage && !isPdf) {
+                      toast.error("Only Image or PDF files allowed");
+                      return;
+                    }
+
+                    // ✅ Max 5MB
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error("Max file size is 5MB");
+                      return;
+                    }
+
+                    updateSignatory(i, "idProof", file);
+                  }}
+                  className="border rounded px-3 py-2 w-full"
+                />
+
+                {/* ===== Preview ===== */}
+
+                {s.idProof && (
+                  <div className="mt-2">
+                    {/* Image Preview */}
+                    {s.idProof.type.startsWith("image/") ? (
+                      <img
+                        src={URL.createObjectURL(s.idProof)}
+                        alt="preview"
+                        className="h-20 w-32 object-cover border rounded"
+                      />
+                    ) : (
+                      /* PDF Preview */
+                      <iframe
+                        src={URL.createObjectURL(s.idProof)}
+                        title="PDF Preview"
+                        className="h-32 w-40 border rounded"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
 
                 {!s.isDefault && (
                   <button
@@ -390,22 +445,7 @@ const Page = () => {
                   </button>
                 )}
               </div>
-              {/* ID Proof Upload */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  {form.signingMode === "NEKYC"
-                    ? "Passport (Image)"
-                    : "Aadhaar Card (Image)"}
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    updateSignatory(i, "idProof", e.target.files[0])
-                  }
-                  className="border rounded px-3 py-2 w-full"
-                />
-              </div>
+              
 
             </div>
           ))}

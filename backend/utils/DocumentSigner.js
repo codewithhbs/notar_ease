@@ -60,7 +60,61 @@ function getPositionCoordinates(position) {
     return map[position] || map["bottom-right"];
 }
 
+// ---------------- POSITION ENGINE ---------------- //
+
+function scalePosition(pos, page) {
+    const baseWidth = 800;   // coordinate tool reference
+    const baseHeight = 1000;
+
+    const scaleX = page.width / baseWidth;
+    const scaleY = page.height / baseHeight;
+
+    return {
+        Left: Math.round(pos.Left * scaleX),
+        Top: Math.round(pos.Top * scaleY),
+        Width: Math.round(pos.Width * scaleX),
+        Height: Math.round(pos.Height * scaleY),
+    };
+}
+
+
+// 🔹 Dynamic Bottom-Left Grid
+function getDynamicBottomLeftPosition(index, total) {
+    const baseLeft = 60;
+    const baseTop = 150;
+
+    const maxPerRow = 4;      // 4 signatures per row
+    const width = 130;
+    const height = 60;
+
+    const gapX = 10;
+    const gapY = 70;
+
+    const row = Math.floor(index / maxPerRow);
+    const col = index % maxPerRow;
+
+    return {
+        Left: baseLeft + col * (width + gapX),
+        Top: baseTop + row * gapY,
+        Width: width,
+        Height: height,
+    };
+}
+
+
+// 🔹 Notary Fixed Bottom-Right
+function getNotaryPosition() {
+    return {
+        Left: 500,   // adjust via coordinate tool
+        Top: 150,
+        Width: 180,
+        Height: 60,
+    };
+}
+
+
 async function buildSigningPayload(meeting) {
+
     const advocateEmail = meeting.advocateId.email;
 
     const signatoryEmails = [];
@@ -72,20 +126,34 @@ async function buildSigningPayload(meeting) {
         responseType: "arraybuffer",
     });
 
-    // 2️⃣ Get page sizes
+    // 2️⃣ Page sizes
     const pageSizes = await getPdfPageSizes(pdfRes.data);
-    let signMode;
-    
-    meeting.signatories.forEach((signer, index) => {
+
+    // 3️⃣ Separate signers
+    const notarySigner = meeting.signatories.find(
+        s => s.role === "notary"
+    );
+
+    const normalSigners = meeting.signatories.filter(
+        s => s.role !== "notary"
+    );
+
+    let allSignersOrdered = [...normalSigners];
+    if (notarySigner) allSignersOrdered.push(notarySigner);
+
+
+    // ---------------- LOOP ---------------- //
+
+    allSignersOrdered.forEach((signer, index) => {
+
         signatoryEmails.push(signer.email);
-        
-            if (signer.signingMode === 'adhaarESign') {
-                signMode = "12";
-            } else if (signer.signingMode === 'dsc') {
-                signMode = "1";
-            } else if (signer.signingMode === 'NEKYC') {
-                signMode = "3";
-            }
+
+        // 🔹 Signature Mode
+        let signMode = "1";
+
+        if (signer.signingMode === "adhaarESign") signMode = "12";
+        else if (signer.signingMode === "dsc") signMode = "1";
+        else if (signer.signingMode === "NEKYC") signMode = "3";
 
         signatureSettings.push({
             ModeOfSignature: signMode,
@@ -97,33 +165,53 @@ async function buildSigningPayload(meeting) {
             Automatedsigningenabled: false,
         });
 
-        // 🔥 MULTIPLE PAGES SUPPORT
+
+        // 🔥 MULTI-PAGE
         signer.PageNo.forEach((pageNo) => {
+
             const pageIndex = pageNo - 1;
             const page = pageSizes[pageIndex];
-
             if (!page) return;
 
-            const pos = getPositionCoordinates(
-                signer.signPosition
-            );
+            let rawPos;
 
+            // ---------------- POSITION DECIDER ---------------- //
+
+            if (signer.role === "notary") {
+
+                rawPos = getNotaryPosition();
+
+            } else {
+
+                rawPos = getDynamicBottomLeftPosition(
+                    index,
+                    normalSigners.length
+                );
+
+            }
+
+            // 🔹 Scale to page size
+            const pos = scalePosition(rawPos, page);
 
             controlDetails.push({
                 PageNo: String(pageNo),
                 ControlID: 4,
                 AssignedTo: index + 1,
-                Left: Math.round(pos.Left),
-                Top: Math.round(pos.Top),
-                Width: Math.round(pos.Width),
-                Height: Math.round(pos.Height),
+                Left: pos.Left,
+                Top: pos.Top,
+                Width: pos.Width,
+                Height: pos.Height,
             });
 
-
         });
+
     });
 
+
+    // ---------------- BASE64 ---------------- //
+
     const base64PDF = Buffer.from(pdfRes.data).toString("base64");
+
 
     return {
         EmailId: advocateEmail,

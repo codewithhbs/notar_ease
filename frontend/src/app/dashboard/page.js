@@ -9,9 +9,16 @@ import HomeTab from "@/components/HomeTab/HomeTab";
 import api from "@/utils/api";
 import ProfileUpdate from "@/components/Profile/ProfileUpdate";
 import TimeSlot from "@/components/TimeSlot/TimeSlot";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState("home");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabFromUrl = searchParams.get("tab");
+
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "home");
+
   const [modalOpen, setModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -33,7 +40,15 @@ export default function Page() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    router.push(`/dashboard?tab=${tab}`);
   };
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
 
   const handleMobileTabChange = (tab) => {
     setActiveTab(tab);
@@ -285,7 +300,10 @@ export default function Page() {
             </div> */}
 
             {/* Tab Content */}
-            {activeTab === "home" && <HomeTab />}
+            {activeTab === "home" && (
+              <HomeTab onTabChange={handleTabChange} openMeetingModal={() => setModalOpen(true)} />
+            )}
+
             {activeTab === "meetings" && (
               <MeetingsTab openModal={() => setModalOpen(true)} />
             )}

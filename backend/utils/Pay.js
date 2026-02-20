@@ -146,7 +146,7 @@ async function initiateRazorpay(req, res, order) {
     // 4️⃣ Order create options
     const options = {
       amount: Math.round(totalAmount * 100), // paise
-      currency: "INR",
+      currency: order?.currency || "INR",
       receipt: crypto.randomBytes(10).toString("hex"),
       payment_capture: 1,
     };

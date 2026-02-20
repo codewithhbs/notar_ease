@@ -3,7 +3,7 @@ const Meeting = require("../models/meeting.model");
 const signedDocumentModel = require("../models/signedDocument.model");
 const meetingEndQueue = require("../queues/meetingEnd.queue");
 const meetingReminderQueue = require("../queues/meetingReminder.queue");
-const { uploadPDF, uploadImage, deleteImageFromCloudinary } = require("../utils/Cloudnary");
+const { uploadPDF, uploadImage, deleteImageFromCloudinary, uploadFileToCloudinary } = require("../utils/Cloudnary");
 const { initiateDocumentSigning } = require("../utils/DocumentSigner");
 const getPdfPageCount = require("../utils/getPdfPageCount");
 const createGoogleMeet = require("../utils/googleMeet");
@@ -198,13 +198,20 @@ async function createMeeting(req, res) {
           req.files?.[`signatories.${index}.idProof`];
 
         if (idProofFile) {
-          const upload = await uploadImage(idProofFile[0].buffer);
 
+          // Upload as IMAGE (kyunki ID proof photo hi hota hai)
+          const upload = await uploadFileToCloudinary(
+            idProofFile[0].buffer,
+            "image"
+          );
+
+          // ⚠️ FIELD STRUCTURE SAME rakha hai (as you asked)
           idProofData = {
-            image: upload.image,
+            image: upload.url,
             public_id: upload.public_id,
           };
         }
+
 
         const parsedPageNo = parsePageNo(s.PageNo);
 
@@ -233,6 +240,7 @@ async function createMeeting(req, res) {
           MobileNo: s.MobileNo,
           DOB: s.DOB,
           Gender: s.Gender,
+          role: 'signer', // Default role as signer, can be updated later if needed
 
           // ✅ FINAL ARRAY OF NUMBERS
           PageNo: parsedPageNo,
@@ -242,7 +250,7 @@ async function createMeeting(req, res) {
             : "bottom-left",
 
           idProof: idProofData,
-          signingMode:signingMode
+          signingMode: signingMode
         };
       })
     );
@@ -258,9 +266,10 @@ async function createMeeting(req, res) {
     if (signingMode === "adhaarESign") {
       amount = 1000 * signatoryCount;
       if (totalPdfPages > 1) {
-        const additionalPages = totalPdfPages * 100;
+        const additionalPages = (totalPdfPages - 1) * 100;
         amount = amount + additionalPages;
       }
+
       // if (signatoryCount <= 2) amount = 1000 ;
       // else if (signatoryCount <= 4) amount = 1500;
       // else if (signatoryCount <= 9) amount = 3000;
@@ -274,8 +283,8 @@ async function createMeeting(req, res) {
 
     if (signingMode === "dsc") {
       amount = 3000 * signatoryCount;
-      if(totalPdfPages > 1) {
-        const additionalPages = totalPdfPages * 100;
+      if (totalPdfPages > 1) {
+        const additionalPages = (totalPdfPages - 1) * 100;
         amount = amount + additionalPages;
       }
       // if (signatoryCount <= 2) amount = 5000;
@@ -290,8 +299,12 @@ async function createMeeting(req, res) {
     }
 
     if (signingMode === "NEKYC") {
-      amount = 100;
+      amount = 35 * signatoryCount;
       currency = "USD";
+      if (totalPdfPages > 1) {
+        const additionalPages = (totalPdfPages - 1) * 1;
+        amount = amount + additionalPages;
+      }
     }
 
     if (!amount) {
@@ -810,7 +823,8 @@ async function advSignDetail(req, res) {
       Gender,
       PageNo: cleanPageNo,
       signPosition,
-      signingMode
+      signingMode,
+      role: "notary",
     };
 
     // ➕ Push signer

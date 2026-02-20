@@ -17,11 +17,21 @@ export default function Header() {
 
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user) {
-      setLoggedIn(true);
-    }
+    const checkLogin = () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      setLoggedIn(!!user);
+    };
+
+    checkLogin();
+
+    // Listen custom login event
+    window.addEventListener("user-login", checkLogin);
+
+    return () => {
+      window.removeEventListener("user-login", checkLogin);
+    };
   }, []);
+
 
   const navItems = [
     { name: "Home", href: "/" },
@@ -91,7 +101,7 @@ export default function Header() {
               {/* Book Appointment Button */}
               {loggedIn ? (
                 <a
-                  href="/dashboard"
+                  href="/dashboard?tab=home"
                   className="bg-linear-to-r hidden md:flex from-indigo-600 to-blue-700 text-white px-6 py-3 rounded-full font-bold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2"
                 >
                   {/* <Gavel className="w-5 h-5" /> */}
@@ -150,7 +160,7 @@ export default function Header() {
                 </div>
                 {loggedIn ? (
                   <a
-                    href="/dashboard"
+                    href="/dashboard?tab=home"
                     className="bg-linear-to-r from-indigo-600 to-blue-700 text-white px-8 py-4 rounded-full font-bold text-center text-lg"
                     onClick={() => setMobileMenuOpen(false)}
                   >

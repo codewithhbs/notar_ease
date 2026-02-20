@@ -43,6 +43,9 @@ export default function Page() {
           localStorage.setItem("accessToken", accessToken || "");
           localStorage.setItem("refreshToken", refreshToken || "");
           localStorage.setItem("sessionId", sessionId || "");
+
+          // Trigger update
+          window.dispatchEvent(new Event("user-login"));
         } catch (err) {
           console.warn("LocalStorage error:", err);
         }

@@ -309,7 +309,7 @@ const Page = () => {
             <h2 className="text-sm font-semibold text-gray-500 mb-2">
               CASE DETAILS
             </h2>
-            <p><strong>Amount:</strong> ₹{meeting.amount}</p>
+            <p><strong>Amount:</strong> {meeting.currency === 'USD' ? '$' : '₹'}{meeting.amount}</p>
             <p><strong>Signing Mode:</strong> {meeting.signingMode}</p>
             <p><strong>Signatories:</strong> {meeting.signatoryCount}</p>
 
@@ -369,21 +369,37 @@ const Page = () => {
                     </td>
                     <td className="border px-3 py-2">{sig.PageNo.map(Number).join(", ")}</td>
                     <td className="border px-3 py-2">{sig.signPosition}</td>
-                    <td className="border px-3 py-2 space-y-2">
-                      <a target='_blank' href={sig.idProof?.image}>
-                        {sig.idProof?.image ? (
-                          <img
-                            src={sig.idProof.image}
-                            alt="Signer IdProof"
-                            className="w-16 h-16 object-cover rounded border mx-auto"
-                          />
-                        ) : (
-                          <span className="text-xs text-gray-400 block">
-                            No document
-                          </span>
-                        )}
-                      </a>
+                    <td className="border px-3 py-2 space-y-2 text-center">
+                      {sig.idProof?.image ? (() => {
+                        const fileUrl = sig.idProof.image;
+
+                        // Detect file type by extension
+                        const isPdf = fileUrl.toLowerCase().endsWith(".pdf");
+
+                        return (
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                            {isPdf ? (
+                              /* ===== PDF Preview ===== */
+                              <div className="w-16 h-16 flex items-center justify-center border rounded bg-gray-50 text-xs text-gray-600">
+                                PDF
+                              </div>
+                            ) : (
+                              /* ===== Image Preview ===== */
+                              <img
+                                src={fileUrl}
+                                alt="Signer IdProof"
+                                className="w-16 h-16 object-cover rounded border mx-auto"
+                              />
+                            )}
+                          </a>
+                        );
+                      })() : (
+                        <span className="text-xs text-gray-400 block">
+                          No document
+                        </span>
+                      )}
                     </td>
+
 
                     {/* DOCUMENT COLUMN */}
                     <td className="border px-3 py-2 space-y-2">

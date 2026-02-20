@@ -34,22 +34,25 @@ const upload = multer({
   }
 });
 
+const MAX_SIGNATORIES = 9;
+
+const dynamicFields = [
+  { name: "documentUrl", maxCount: 1 }
+];
+
+for (let i = 0; i < MAX_SIGNATORIES; i++) {
+  dynamicFields.push({
+    name: `signatories[${i}][idProof]`,
+    maxCount: 1,
+  });
+}
+
 router.post(
   "/create",
-  upload.fields([
-    { name: "documentUrl", maxCount: 1 },          // Main PDF
-    { name: "signatories[0][idProof]", maxCount: 1 },
-    { name: "signatories[1][idProof]", maxCount: 1 },
-    { name: "signatories[2][idProof]", maxCount: 1 },
-    { name: "signatories[3][idProof]", maxCount: 1 },
-    { name: "signatories[4][idProof]", maxCount: 1 },
-    { name: "signatories[5][idProof]", maxCount: 1 },
-    { name: "signatories[6][idProof]", maxCount: 1 },
-    { name: "signatories[7][idProof]", maxCount: 1 },
-    { name: "signatories[8][idProof]", maxCount: 1 }
-  ]),
+  upload.fields(dynamicFields),
   meetingController.createMeeting
 );
+
 
 router.post("/create-payment/:meetingId", authenticateAccessToken, meetingController.createPayment);
 router.post("/check-status", meetingController.checkStatus);

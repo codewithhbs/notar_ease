@@ -22,6 +22,11 @@ const signerSchema = new mongoose.Schema({
     enum: ["adhaarESign", "dsc", "NEKYC"],
     default: "adhaarESign",
   },
+  role: {
+    type: String,
+    enum: ["signer", "notary"],
+    default: "signer",
+  },
   idProof: {
     image: {
       type: String,

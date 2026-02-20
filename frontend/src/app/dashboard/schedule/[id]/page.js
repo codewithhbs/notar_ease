@@ -61,7 +61,7 @@ const Page = () => {
       const res = await api.post(`/api/meeting/create-payment/${id}`);
 
       // Already paid
-      if (res.data?.message === "Meeting already paid") {
+      if (res.data?.message == "Meeting already paid") {
         toast.update("payment", {
           render: "Payment already completed ✅",
           type: "success",

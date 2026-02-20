@@ -2,12 +2,48 @@ const cloudinary = require('cloudinary').v2;
 require('dotenv').config()
 const fs = require('fs').promises;
 const path = require('path');
+const streamifier = require("stream").Readable;
 
 cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_SECRET_KEY,
     cloud_name: process.env.CLOUD_NAME
 });
+
+const uploadFileToCloudinary = async (fileBuffer, fileType = "auto") => {
+    try {
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "artists",
+                    resource_type: fileType,
+                    // "auto" → images, pdf, video, etc sab handle karega
+                },
+                (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error:", error);
+                        reject(error);
+                    } else {
+                        resolve({
+                            url: result.secure_url,
+                            public_id: result.public_id,
+                            resource_type: result.resource_type,
+                            format: result.format,
+                            bytes: result.bytes,
+                        });
+                    }
+                }
+            );
+
+            // Buffer → Stream → Cloudinary
+            const bufferStream = streamifier.from(fileBuffer);
+            bufferStream.pipe(uploadStream);
+        });
+    } catch (error) {
+        console.error("Upload file error:", error);
+        throw new Error("Failed to upload file");
+    }
+};
 
 const uploadPDF = async (fileBuffer) => {
     try {
@@ -184,5 +220,5 @@ const deleteVoiceNoteFromCloudinary = async (public_id) => {
 // };
 
 module.exports = {
-    uploadImage, deleteVideoFromCloudinary, uploadVideo, uploadVoiceNote, deleteVoiceNoteFromCloudinary, deleteImageFromCloudinary, uploadPDF, deletePdfFromCloudinary, uploadPDFTwo
+    uploadImage, deleteVideoFromCloudinary, uploadVideo, uploadVoiceNote, deleteVoiceNoteFromCloudinary, deleteImageFromCloudinary, uploadPDF, deletePdfFromCloudinary, uploadPDFTwo, uploadFileToCloudinary
 };

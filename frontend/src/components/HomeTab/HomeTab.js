@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { User, Video, Calendar, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const actions = [
   {
@@ -9,6 +10,7 @@ const actions = [
     title: "Complete Your Profile",
     desc: "Ensure your profile is up-to-date.",
     btn: "Update Profile",
+    tab: "profile",
   },
   {
     icon: Video,
@@ -16,22 +18,27 @@ const actions = [
     desc: "Schedule your notary session.",
     btn: "Book Meeting",
     primary: true,
+    redirect: "/dashboard/create-meeting",
   },
+
   {
     icon: Calendar,
     title: "Check Available Timeslots",
     desc: "View all available notary slots.",
     btn: "Check Timeslots",
+    tab: "slots",
   },
   {
     icon: Mail,
     title: "Contact Us",
     desc: "We're here to help!",
     btn: "hello@ommdocumentation.com",
+    mail: true,
   },
 ];
 
-export default function HomeTab() {
+export default function HomeTab({ onTabChange, openMeetingModal }) {
+  const router = useRouter();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -55,14 +62,12 @@ export default function HomeTab() {
           >
             <div className="flex gap-4 sm:gap-5 items-start">
               <div
-                className={`p-3 sm:p-4 rounded-full ${
-                  action.primary ? "bg-indigo-100" : "bg-gray-100"
-                }`}
+                className={`p-3 sm:p-4 rounded-full ${action.primary ? "bg-indigo-100" : "bg-gray-100"
+                  }`}
               >
                 <action.icon
-                  className={`w-6 h-6 sm:w-8 sm:h-8 ${
-                    action.primary ? "text-indigo-900" : "text-gray-700"
-                  }`}
+                  className={`w-6 h-6 sm:w-8 sm:h-8 ${action.primary ? "text-indigo-900" : "text-gray-700"
+                    }`}
                 />
               </div>
               <div className="flex-1">
@@ -73,11 +78,15 @@ export default function HomeTab() {
                   {action.desc}
                 </p>
                 <button
-                  className={`w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition ${
-                    action.primary
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                  }`}
+                  onClick={() => {
+                    if (action.tab) onTabChange(action.tab);
+                    if (action.redirect) router.push(action.redirect);
+                    if (action.mail) window.location.href = `mailto:${action.btn}`;
+                  }}
+                  className={`w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition ${action.primary
+                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    }`}
                 >
                   {action.btn}
                 </button>
