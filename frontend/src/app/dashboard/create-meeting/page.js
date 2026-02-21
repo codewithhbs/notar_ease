@@ -51,6 +51,7 @@ const Page = () => {
         Gender: "",
         PageNo: [],
         signPosition: "bottom-left",
+        signingMode: "adhaarESign",
         isDefault: true,
         idProof: null, // 👈 added
       },
@@ -84,6 +85,7 @@ const Page = () => {
         Gender: "",
         PageNo: [],
         signPosition: "bottom-left",
+        signingMode: "adhaarESign",
         isDefault: false,
         idProof: null,
       },
@@ -374,66 +376,66 @@ const Page = () => {
                 </select> */}
 
                 {/* ID Proof Upload */}
-              <div className="space-y-1">
-                {/* Dynamic Label */}
-                <label className="text-xs font-medium text-gray-600">
-                  {form.signingMode === "NEKYC"
-                    ? "Passport (Image / PDF)"
-                    : form.signingMode === "dsc"
-                      ? "DSC Certificate (Image / PDF)"
-                      : "Aadhaar Card (Image / PDF)"}
-                </label>
+                <div className="space-y-1">
+                  {/* Dynamic Label */}
+                  <label className="text-xs font-medium text-gray-600">
+                    {form.signingMode === "NEKYC"
+                      ? "Passport (Image / PDF)"
+                      : form.signingMode === "dsc"
+                        ? "DSC Certificate (Image / PDF)"
+                        : "Aadhaar Card (Image / PDF)"}
+                  </label>
 
-                {/* File Input */}
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
+                  {/* File Input */}
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
 
-                    // ✅ Allow image OR pdf
-                    const isImage = file.type.startsWith("image/");
-                    const isPdf = file.type === "application/pdf";
+                      // ✅ Allow image OR pdf
+                      const isImage = file.type.startsWith("image/");
+                      const isPdf = file.type === "application/pdf";
 
-                    if (!isImage && !isPdf) {
-                      toast.error("Only Image or PDF files allowed");
-                      return;
-                    }
+                      if (!isImage && !isPdf) {
+                        toast.error("Only Image or PDF files allowed");
+                        return;
+                      }
 
-                    // ✅ Max 5MB
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast.error("Max file size is 5MB");
-                      return;
-                    }
+                      // ✅ Max 5MB
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Max file size is 5MB");
+                        return;
+                      }
 
-                    updateSignatory(i, "idProof", file);
-                  }}
-                  className="border rounded px-3 py-2 w-full"
-                />
+                      updateSignatory(i, "idProof", file);
+                    }}
+                    className="border rounded px-3 py-2 w-full"
+                  />
 
-                {/* ===== Preview ===== */}
+                  {/* ===== Preview ===== */}
 
-                {s.idProof && (
-                  <div className="mt-2">
-                    {/* Image Preview */}
-                    {s.idProof.type.startsWith("image/") ? (
-                      <img
-                        src={URL.createObjectURL(s.idProof)}
-                        alt="preview"
-                        className="h-20 w-32 object-cover border rounded"
-                      />
-                    ) : (
-                      /* PDF Preview */
-                      <iframe
-                        src={URL.createObjectURL(s.idProof)}
-                        title="PDF Preview"
-                        className="h-32 w-40 border rounded"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
+                  {s.idProof && (
+                    <div className="mt-2">
+                      {/* Image Preview */}
+                      {s.idProof.type.startsWith("image/") ? (
+                        <img
+                          src={URL.createObjectURL(s.idProof)}
+                          alt="preview"
+                          className="h-20 w-32 object-cover border rounded"
+                        />
+                      ) : (
+                        /* PDF Preview */
+                        <iframe
+                          src={URL.createObjectURL(s.idProof)}
+                          title="PDF Preview"
+                          className="h-32 w-40 border rounded"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {!s.isDefault && (
                   <button
@@ -445,7 +447,24 @@ const Page = () => {
                   </button>
                 )}
               </div>
-              
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600">
+                  Signing Mode
+                </label>
+
+                <select
+                  value={s.signingMode}
+                  onChange={(e) =>
+                    updateSignatory(i, "signingMode", e.target.value)
+                  }
+                  className="border rounded px-3 py-2 w-full"
+                >
+                  <option value="adhaarESign">Aadhaar eSign</option>
+                  <option value="dsc">Digital Signature Certificate (DSC)</option>
+                  <option value="NEKYC">NE-KYC</option>
+                </select>
+              </div>
 
             </div>
           ))}

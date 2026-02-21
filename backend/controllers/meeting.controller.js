@@ -244,13 +244,14 @@ async function createMeeting(req, res) {
 
           // ✅ FINAL ARRAY OF NUMBERS
           PageNo: parsedPageNo,
+          signingMode: s.signingMode,
 
           signPosition: allowedPositions.includes(s.signPosition)
             ? s.signPosition
             : "bottom-left",
 
           idProof: idProofData,
-          signingMode: signingMode
+          // signingMode: signingMode
         };
       })
     );
@@ -258,54 +259,106 @@ async function createMeeting(req, res) {
     const signatoryCount = formattedSignatories.length;
 
     /* =========================
-       PRICING LOGIC
-    ========================= */
+   PRICING LOGIC (DEBUG MODE)
+========================= */
+
     let amount = 0;
-    let currency = "INR";
 
-    if (signingMode === "adhaarESign") {
-      amount = 1000 * signatoryCount;
-      if (totalPdfPages > 1) {
-        const additionalPages = (totalPdfPages - 1) * 100;
-        amount = amount + additionalPages;
+    // 👇 Meeting currency
+    let currency = signingMode === "NEKYC" ? "USD" : "INR";
+
+    console.log("========== PRICING DEBUG START ==========");
+    console.log("Meeting Signing Mode:", signingMode);
+    console.log("Meeting Currency:", currency);
+    console.log("Total PDF Pages:", totalPdfPages);
+
+    const USD_TO_INR = 90;
+
+    formattedSignatories.forEach((signatory, index) => {
+      console.log(`\n---- Signatory ${index + 1} ----`);
+      console.log("Name:", signatory.name);
+      console.log("Signing Mode:", signatory.signingMode);
+
+      let basePrice = 0;
+      let signerCurrency = "INR";
+
+      /* =========================
+         BASE PRICE
+      ========================= */
+
+      if (signatory.signingMode === "adhaarESign") {
+        basePrice = 1000;
+        signerCurrency = "INR";
       }
 
-      // if (signatoryCount <= 2) amount = 1000 ;
-      // else if (signatoryCount <= 4) amount = 1500;
-      // else if (signatoryCount <= 9) amount = 3000;
-      // else {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Maximum 9 signatories allowed for Aadhaar eSign",
-      //   });
-      // }
-    }
-
-    if (signingMode === "dsc") {
-      amount = 3000 * signatoryCount;
-      if (totalPdfPages > 1) {
-        const additionalPages = (totalPdfPages - 1) * 100;
-        amount = amount + additionalPages;
+      if (signatory.signingMode === "dsc") {
+        basePrice = 3000;
+        signerCurrency = "INR";
       }
-      // if (signatoryCount <= 2) amount = 5000;
-      // else if (signatoryCount <= 4) amount = 6000;
-      // else if (signatoryCount <= 9) amount = 8000;
-      // else {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Maximum 9 signatories allowed for DSC",
-      //   });
-      // }
-    }
 
-    if (signingMode === "NEKYC") {
-      amount = 35 * signatoryCount;
-      currency = "USD";
-      if (totalPdfPages > 1) {
-        const additionalPages = (totalPdfPages - 1) * 1;
-        amount = amount + additionalPages;
+      if (signatory.signingMode === "NEKYC") {
+        basePrice = 35;
+        signerCurrency = "USD";
       }
-    }
+
+      console.log("Base Price:", basePrice, signerCurrency);
+
+      /* =========================
+         PAGE CHARGES
+      ========================= */
+
+      if (totalPdfPages > 1) {
+        let pageCharge = 0;
+
+        if (signerCurrency === "USD") {
+          pageCharge = (totalPdfPages - 1) * 1;
+        } else {
+          pageCharge = (totalPdfPages - 1) * 100;
+        }
+
+        basePrice += pageCharge;
+
+        console.log(
+          "Page Charges Added:",
+          pageCharge,
+          signerCurrency
+        );
+      }
+
+      console.log("Price After Page Charges:", basePrice, signerCurrency);
+
+      /* =========================
+         CURRENCY CONVERSION
+      ========================= */
+
+      if (currency === "INR" && signerCurrency === "USD") {
+        console.log(
+          `Converting USD → INR @${USD_TO_INR}`
+        );
+        basePrice = basePrice * USD_TO_INR;
+      }
+
+      if (currency === "USD" && signerCurrency === "INR") {
+        console.log(
+          `Converting INR → USD @${USD_TO_INR}`
+        );
+        basePrice = basePrice / USD_TO_INR;
+      }
+
+      console.log("Final Signatory Price:", basePrice, currency);
+
+      amount += basePrice;
+    });
+
+    /* =========================
+       FINAL AMOUNT
+    ========================= */
+
+    amount = Number(amount.toFixed(2));
+
+    console.log("\n========== FINAL BILL ==========");
+    console.log("Total Amount:", amount, currency);
+    console.log("================================");
 
     if (!amount) {
       return res.status(400).json({

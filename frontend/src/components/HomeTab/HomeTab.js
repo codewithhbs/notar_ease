@@ -3,42 +3,86 @@
 import { motion } from "framer-motion";
 import { User, Video, Calendar, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const actions = [
-  {
-    icon: User,
-    title: "Complete Your Profile",
-    desc: "Ensure your profile is up-to-date.",
-    btn: "Update Profile",
-    tab: "profile",
-  },
-  {
-    icon: Video,
-    title: "Book a Meeting",
-    desc: "Schedule your notary session.",
-    btn: "Book Meeting",
-    primary: true,
-    redirect: "/dashboard/create-meeting",
-  },
-
-  {
-    icon: Calendar,
-    title: "Check Available Timeslots",
-    desc: "View all available notary slots.",
-    btn: "Check Timeslots",
-    tab: "slots",
-  },
-  {
-    icon: Mail,
-    title: "Contact Us",
-    desc: "We're here to help!",
-    btn: "hello@ommdocumentation.com",
-    mail: true,
-  },
-];
+import { useEffect, useState } from "react";
 
 export default function HomeTab({ onTabChange, openMeetingModal }) {
   const router = useRouter();
+  const [role, setRole] = useState({});
+  
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    setRole(user.role);
+  }, [])
+
+  let actions = [];
+  if (role === "advocate") {
+    actions = [
+      {
+        icon: User,
+        title: "Complete Your Profile",
+        desc: "Ensure your profile is up-to-date.",
+        btn: "Update Profile",
+        tab: "profile",
+      },
+      {
+        icon: Video,
+        title: "Book a Meeting",
+        desc: "Schedule your notary session.",
+        btn: "Book Meeting",
+        primary: true,
+        tab: "meetings",
+      },
+
+      {
+        icon: Calendar,
+        title: "Check Available Timeslots",
+        desc: "View all available notary slots.",
+        btn: "Check Timeslots",
+        tab: "slots",
+      },
+      {
+        icon: Mail,
+        title: "Contact Us",
+        desc: "We're here to help!",
+        btn: "hello@ommdocumentation.com",
+        mail: true,
+      },
+    ];
+  } else {
+    actions = [
+      {
+        icon: User,
+        title: "Complete Your Profile",
+        desc: "Ensure your profile is up-to-date.",
+        btn: "Update Profile",
+        tab: "profile",
+      },
+      {
+        icon: Video,
+        title: "Book a Meeting",
+        desc: "Schedule your notary session.",
+        btn: "Book Meeting",
+        primary: true,
+        redirect: "/dashboard/create-meeting",
+      },
+
+      {
+        icon: Calendar,
+        title: "Check Available Timeslots",
+        desc: "View all available notary slots.",
+        btn: "Check Timeslots",
+        tab: "slots",
+      },
+      {
+        icon: Mail,
+        title: "Contact Us",
+        desc: "We're here to help!",
+        btn: "hello@ommdocumentation.com",
+        mail: true,
+      },
+    ];
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
