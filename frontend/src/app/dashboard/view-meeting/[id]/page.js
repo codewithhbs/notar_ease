@@ -4,75 +4,78 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import api from '@/utils/api'
 import { toast } from 'react-toastify'
+import { FileText, User, Calendar, Clock, Hash, MapPin, Upload, X, ChevronRight, Video } from 'lucide-react'
+
+const inputClass = "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 bg-gray-50 focus:bg-white focus:outline-none focus:border-[#005F5A] focus:ring-2 focus:ring-[#005F5A]/10 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+const labelClass = "block text-[10px] font-bold tracking-[0.08em] uppercase text-[#005F5A] mb-1.5"
+
+function SectionCard({ title, icon: Icon, children }) {
+  return (
+    <div className="bg-white rounded-3xl border border-[#005F5A]/10 shadow-sm overflow-hidden">
+      <div className="h-1 bg-gradient-to-r from-[#005F5A] to-[#00A896]" />
+      <div className="p-6">
+        {title && (
+          <div className="flex items-center gap-2.5 mb-5">
+            {Icon && (
+              <div className="w-9 h-9 bg-[#E6F4F3] rounded-xl flex items-center justify-center">
+                <Icon size={16} className="text-[#005F5A]" />
+              </div>
+            )}
+            <h2 className="text-sm font-bold text-gray-800 tracking-[0.06em] uppercase" style={{ fontFamily: "'Georgia', serif" }}>
+              {title}
+            </h2>
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between py-3 border-b border-gray-50 last:border-0">
+      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</span>
+      <span className="text-sm font-medium text-gray-800 text-right max-w-[60%]">{value || '—'}</span>
+    </div>
+  )
+}
 
 const Page = () => {
   const { id } = useParams()
-
   const [meeting, setMeeting] = useState(null)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [uploadingIndex, setUploadingIndex] = useState(null)
-
   const [showSignerModal, setShowSignerModal] = useState(false)
 
   const [signerForm, setSignerForm] = useState({
-    name: '',
-    email: '',
-    CountryCode: '+91',
-    MobileNo: '',
-    DOB: '',
-    Gender: '',
-    PageNo: [],          // 👈 backend ke liye
-    pageInput: '',       // 👈 UI ke liye ( "1,2,3" )
-    signPosition: 'bottom-right',
-    signingMode: 'adhaarESign',
+    name: '', email: '', CountryCode: '+91', MobileNo: '',
+    DOB: '', Gender: '', PageNo: [], pageInput: '',
+    signPosition: 'bottom-right', signingMode: 'adhaarESign',
   })
 
-  const formatMeetingDate = (date) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
+  const formatMeetingDate = (date) =>
+    new Date(date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
 
-  const formatMeetingTime = (date) => {
-    return new Date(date).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
+  const formatMeetingTime = (date) =>
+    new Date(date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
 
-
-
-  /* ================= AUTH ================= */
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'))
-    if (!storedUser) {
-      localStorage.clear()
-      window.location.href = '/login'
-      return
-    }
+    if (!storedUser) { localStorage.clear(); window.location.href = '/login'; return }
     setUser(storedUser)
   }, [])
 
-  const isDisabled = (field) => {
-    return Boolean(signerForm[field])
-  }
+  const isDisabled = (field) => Boolean(signerForm[field])
 
-
-  /* ================= FETCH ================= */
   useEffect(() => {
     const fetchMeeting = async () => {
       try {
         const res = await api.get(`/api/meeting/get-meeting/${id}`)
         setMeeting(res.data.meeting)
-      } catch {
-        toast.error('Unable to load meeting')
-      } finally {
-        setLoading(false)
-      }
+      } catch { toast.error('Unable to load meeting') }
+      finally { setLoading(false) }
     }
     if (id) fetchMeeting()
   }, [id])
@@ -80,211 +83,92 @@ const Page = () => {
   useEffect(() => {
     if (meeting?.advocateId) {
       const adv = meeting.advocateId
-
-      setSignerForm(prev => ({
-        ...prev,
-        name: adv.name || '',
-        email: adv.email || '',
-        MobileNo: adv.phone || '',
-        CountryCode: '+91',
-      }))
+      setSignerForm(prev => ({ ...prev, name: adv.name || '', email: adv.email || '', MobileNo: adv.phone || '', CountryCode: '+91' }))
     }
   }, [meeting])
 
-
-  /* ================= JOIN LOGIC ================= */
   const canJoin = () => {
     if (!meeting?.startTime) return false
-    const diffMin =
-      (new Date(meeting.startTime).getTime() - Date.now()) / 60000
-    return diffMin <= 10
+    return (new Date(meeting.startTime).getTime() - Date.now()) / 60000 <= 10
   }
-
   const canJoinMeeting = canJoin()
 
   const handleJoin = async () => {
     try {
       toast.loading('Connecting…', { toastId: 'join' })
       const res = await api.get(`/api/meeting/join-meeting/${id}`)
-
-      toast.update('join', {
-        render: 'Meeting joined',
-        type: 'success',
-        isLoading: false,
-      })
-
-      if (res.data?.meetLink) {
-        window.open(res.data.meetLink, '_blank')
-      }
+      toast.update('join', { render: 'Meeting joined', type: 'success', isLoading: false })
+      if (res.data?.meetLink) window.open(res.data.meetLink, '_blank')
     } catch (err) {
-      console.log("error", err)
-      toast.update('join', {
-        render: err.response?.data?.message || 'Unable to join meeting',
-        type: 'error',
-        isLoading: false,
-      })
+      toast.update('join', { render: err.response?.data?.message || 'Unable to join meeting', type: 'error', isLoading: false })
     }
   }
 
-  /* ================= SEND FOR SIGN ================= */
-  const handleSendForSign = async () => {
-    try {
-      toast.loading('Sending document for signing...', { toastId: 'sign' })
-
-      const res = await api.post(
-        `/api/meeting/send-document-for-sign/${id}`
-      )
-
-      toast.update('sign', {
-        render: res.data?.message || 'Document sent for signing',
-        type: 'success',
-        isLoading: false,
-      })
-    } catch (err) {
-      console.log("error", err)
-      toast.update('sign', {
-        render: err.response?.data?.message || 'Failed to send document',
-        type: 'error',
-        isLoading: false,
-      })
-    }
-  }
-
-  /* ================= SIGN FLOW ================= */
   const handleSignerSubmit = async () => {
     try {
       toast.loading('Processing...', { toastId: 'signer' })
-
-      // 1️⃣ Add signer
-      const addSignerRes = await api.post(
-        `/api/meeting/adv-sign-detail/${id}`,
-        signerForm
-      )
-
-      // ✅ success true hone par hi next API
-      if (addSignerRes.data?.success === true) {
-        await api.post(`/api/meeting/sign-document-for-notary/${id}`)
-      }
-
-      // 2️⃣ Send document for sign
+      const addSignerRes = await api.post(`/api/meeting/adv-sign-detail/${id}`, signerForm)
+      if (addSignerRes.data?.success === true) await api.post(`/api/meeting/sign-document-for-notary/${id}`)
       await api.post(`/api/meeting/send-document-for-sign/${id}`)
-
-      toast.update('signer', {
-        render: 'Document sent for signing',
-        type: 'success',
-        isLoading: false,
-      })
-
+      toast.update('signer', { render: 'Document sent for signing', type: 'success', isLoading: false })
       setMeeting(prev => ({ ...prev, isSigned: true }))
       setShowSignerModal(false)
-
     } catch (err) {
       const status = err.response?.status
       const message = err.response?.data?.message
-
-      // 🔥 signer already exists case
       if (status === 400 && message === 'Signer already exists') {
         try {
           await api.post(`/api/meeting/send-document-for-sign/${id}`)
-
-          toast.update('signer', {
-            render: 'Signer already existed. Document sent for signing.',
-            type: 'success',
-            isLoading: false,
-          })
-
+          toast.update('signer', { render: 'Signer already existed. Document sent for signing.', type: 'success', isLoading: false })
           setMeeting(prev => ({ ...prev, isSigned: true }))
           setShowSignerModal(false)
           return
         } catch (sendErr) {
-          toast.update('signer', {
-            render:
-              sendErr.response?.data?.message ||
-              'Failed to send document',
-            type: 'error',
-            isLoading: false,
-          })
+          toast.update('signer', { render: sendErr.response?.data?.message || 'Failed to send document', type: 'error', isLoading: false })
           return
         }
       }
-
-      // ❌ other errors
-      toast.update('signer', {
-        render: message || 'Failed',
-        type: 'error',
-        isLoading: false,
-      })
+      toast.update('signer', { render: message || 'Failed', type: 'error', isLoading: false })
     }
   }
 
-  /* ================= SIGNER DOC UPLOAD ================= */
   const handleFaceImageUpload = async (file, signerIndex) => {
     if (!file) return
-
     try {
       setUploadingIndex(signerIndex)
-
       const fd = new FormData()
-      fd.append('faceImage', file) // 👈 multer field
+      fd.append('faceImage', file)
       fd.append('signerIndex', signerIndex)
-
-      const res = await api.put(
-        `/api/meeting/upload-face-image-of-signer/${id}`,
-        fd,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
-
+      const res = await api.put(`/api/meeting/upload-face-image-of-signer/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Signer document uploaded')
-
-      setMeeting(prev => {
-        const updated = { ...prev }
-        updated.signatories[signerIndex] = res.data.signer
-        return updated
-      })
-    } catch (err) {
-      console.log("error", err)
-      toast.error(err.response?.data?.message || 'Upload failed')
-    } finally {
-      setUploadingIndex(null)
-    }
+      setMeeting(prev => { const updated = { ...prev }; updated.signatories[signerIndex] = res.data.signer; return updated })
+    } catch (err) { toast.error(err.response?.data?.message || 'Upload failed') }
+    finally { setUploadingIndex(null) }
   }
 
-  /* ================= SIGNER DOC UPLOAD ================= */
   const handleSignerDocUpload = async (file, signerIndex) => {
     if (!file) return
-
     try {
       setUploadingIndex(signerIndex)
-
       const fd = new FormData()
-      fd.append('doc', file) // 👈 multer field
+      fd.append('doc', file)
       fd.append('signerIndex', signerIndex)
-
-      const res = await api.put(
-        `/api/meeting/upload-doc-of-signer/${id}`,
-        fd,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
-
+      const res = await api.put(`/api/meeting/upload-doc-of-signer/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Signer document uploaded')
-
-      setMeeting(prev => {
-        const updated = { ...prev }
-        updated.signatories[signerIndex] = res.data.signer
-        return updated
-      })
-    } catch (err) {
-      console.log("error", err)
-      toast.error(err.response?.data?.message || 'Upload failed')
-    } finally {
-      setUploadingIndex(null)
-    }
+      setMeeting(prev => { const updated = { ...prev }; updated.signatories[signerIndex] = res.data.signer; return updated })
+    } catch (err) { toast.error(err.response?.data?.message || 'Upload failed') }
+    finally { setUploadingIndex(null) }
   }
 
   if (loading || !meeting || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-        <p className="text-gray-500">Loading meeting file…</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-[#E6F4F3] rounded-2xl flex items-center justify-center mx-auto mb-3 animate-pulse">
+            <FileText size={22} className="text-[#005F5A]" />
+          </div>
+          <p className="text-sm text-gray-400">Loading meeting file…</p>
+        </div>
       </div>
     )
   }
@@ -292,192 +176,132 @@ const Page = () => {
   const isUser = user.role === 'user'
   const counterpart = isUser ? meeting.advocateId : meeting.userId
 
-  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-neutral-100 px-4 py-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-xl border">
+    <div className="min-h-screen bg-gray-50 px-4 py-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-5">
 
-        {/* ================= HEADER ================= */}
-        <div className="p-6 border-b">
-          <h1 className="text-2xl font-semibold">{meeting.meetingTitle}</h1>
-          <p className="text-gray-600 mt-1">{meeting.meetingDescription}</p>
+        {/* ── Page Header ── */}
+        <div>
+          <p className="text-[#00A896] text-xs font-bold tracking-[0.15em] uppercase mb-1">Meeting Details</p>
+          <h1
+            className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1"
+            style={{ fontFamily: "'Georgia', serif" }}
+          >
+            {meeting.meetingTitle}
+          </h1>
+          {meeting.meetingDescription && (
+            <p className="text-sm text-gray-500">{meeting.meetingDescription}</p>
+          )}
         </div>
 
-        {/* ================= DETAILS ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-500 mb-2">
-              CASE DETAILS
-            </h2>
-            <p><strong>Amount:</strong> {meeting.currency === 'USD' ? '$' : '₹'}{meeting.amount}</p>
-            <p><strong>Signing Mode:</strong> {meeting.signingMode}</p>
-            <p><strong>Signatories:</strong> {meeting.signatoryCount}</p>
+        {/* ── Details Grid ── */}
+        <div className="grid md:grid-cols-2 gap-5">
 
-            <p>
-              <strong>Meeting Date:</strong>{" "}
-              {meeting.startTime
-                ? formatMeetingDate(meeting.startTime)
-                : "Not scheduled"}
-            </p>
+          {/* Case Details */}
+          <SectionCard title="Case Details" icon={FileText}>
+            <div>
+              <DetailRow label="Amount" value={`${meeting.currency === 'USD' ? '$' : '₹'}${meeting.amount}`} />
+              <DetailRow label="Signing Mode" value={meeting.signingMode} />
+              <DetailRow label="Signatories" value={meeting.signatoryCount} />
+              <DetailRow
+                label="Meeting Date"
+                value={meeting.startTime ? formatMeetingDate(meeting.startTime) : 'Not scheduled'}
+              />
+              <DetailRow
+                label="Meeting Time"
+                value={meeting.startTime ? formatMeetingTime(meeting.startTime) : 'Not scheduled'}
+              />
+            </div>
+          </SectionCard>
 
-            <p>
-              <strong>Meeting Time:</strong>{" "}
-              {meeting.startTime
-                ? formatMeetingTime(meeting.startTime)
-                : "Not scheduled"}
-            </p>
-
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold text-gray-500 mb-2">
-              {isUser ? 'NOTARY DETAILS' : 'USER DETAILS'}
-            </h2>
-            <p><strong>Name:</strong> {counterpart.name}</p>
-            <p><strong>Email:</strong> {counterpart.email}</p>
-          </div>
+          {/* Counterpart Details */}
+          <SectionCard title={isUser ? 'Notary Details' : 'User Details'} icon={User}>
+            <div>
+              <DetailRow label="Name" value={counterpart?.name} />
+              <DetailRow label="Email" value={counterpart?.email} />
+            </div>
+          </SectionCard>
         </div>
 
-        {/* ================= SIGNATORIES ================= */}
-        <div className="p-6 border-t">
-          <h2 className="text-sm font-semibold text-gray-500 mb-4">
-            SIGNATORIES
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm border">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="border px-3 py-2">Name</th>
-                  <th className="border px-3 py-2">Email</th>
-                  <th className="border px-3 py-2">Mobile</th>
-                  <th className="border px-3 py-2">Page</th>
-                  <th className="border px-3 py-2">Position</th>
-                  <th className="border px-3 py-2">Id Proof</th>
-                  <th className="border px-3 py-2">Face Image</th>
-                  <th className="border px-3 py-2">Document</th>
+        {/* ── Signatories ── */}
+        <SectionCard title="Signatories" icon={User}>
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#005F5A] to-[#007A73] text-white text-xs">
+                  {['Name', 'Email', 'Mobile', 'Pages', 'Position', 'ID Proof', 'Face Image', 'Document'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left font-semibold tracking-[0.05em] uppercase whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
               </thead>
-
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {meeting.signatories.map((sig, index) => (
-                  <tr key={sig._id || index} className="text-center">
-                    <td className="border px-3 py-2">{sig.name}</td>
-                    <td className="border px-3 py-2">{sig.email}</td>
-                    <td className="border px-3 py-2">
-                      {sig.CountryCode} {sig.MobileNo}
+                  <tr key={sig._id || index} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{sig.name}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{sig.email}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{sig.CountryCode} {sig.MobileNo}</td>
+                    <td className="px-4 py-3 text-gray-600">{sig.PageNo.map(Number).join(', ')}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] font-semibold bg-[#E6F4F3] text-[#005F5A] px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {sig.signPosition}
+                      </span>
                     </td>
-                    <td className="border px-3 py-2">{sig.PageNo.map(Number).join(", ")}</td>
-                    <td className="border px-3 py-2">{sig.signPosition}</td>
-                    <td className="border px-3 py-2 space-y-2 text-center">
+
+                    {/* ID Proof */}
+                    <td className="px-4 py-3">
                       {sig.idProof?.image ? (() => {
-                        const fileUrl = sig.idProof.image;
-
-                        // Detect file type by extension
-                        const isPdf = fileUrl.toLowerCase().endsWith(".pdf");
-
+                        const isPdf = sig.idProof.image.toLowerCase().endsWith('.pdf')
                         return (
-                          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                          <a href={sig.idProof.image} target="_blank" rel="noopener noreferrer">
                             {isPdf ? (
-                              /* ===== PDF Preview ===== */
-                              <div className="w-16 h-16 flex items-center justify-center border rounded bg-gray-50 text-xs text-gray-600">
-                                PDF
-                              </div>
+                              <div className="w-14 h-14 flex items-center justify-center border border-[#005F5A]/20 rounded-xl bg-[#E6F4F3] text-[10px] font-bold text-[#005F5A]">PDF</div>
                             ) : (
-                              /* ===== Image Preview ===== */
-                              <img
-                                src={fileUrl}
-                                alt="Signer IdProof"
-                                className="w-16 h-16 object-cover rounded border mx-auto"
-                              />
+                              <img src={sig.idProof.image} alt="ID" className="w-14 h-14 object-cover rounded-xl border border-gray-200" />
                             )}
                           </a>
-                        );
+                        )
                       })() : (
-                        <span className="text-xs text-gray-400 block">
-                          No document
-                        </span>
+                        <span className="text-[11px] text-gray-400">None</span>
                       )}
                     </td>
 
-
-                    {/* DOCUMENT COLUMN */}
-                    <td className="border px-3 py-2 space-y-2">
-                      <a target='_blank' href={sig.faceImage?.image}>
+                    {/* Face Image */}
+                    <td className="px-4 py-3 space-y-1.5">
+                      <a target="_blank" href={sig.faceImage?.image}>
                         {sig.faceImage?.image ? (
-                          <img
-                            src={sig.faceImage.image}
-                            alt="Signer Doc"
-                            className="w-16 h-16 object-cover rounded border mx-auto"
-                          />
+                          <img src={sig.faceImage.image} alt="Face" className="w-14 h-14 object-cover rounded-xl border border-gray-200" />
                         ) : (
-                          <span className="text-xs text-gray-400 block">
-                            No document
-                          </span>
+                          <span className="text-[11px] text-gray-400">None</span>
                         )}
                       </a>
-
                       {!isUser && (
                         <label className="block">
-                          <input
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            disabled={uploadingIndex === index}
-                            onChange={(e) =>
-                              handleFaceImageUpload(
-                                e.target.files[0],
-                                index
-                              )
-                            }
-                          />
-                          <span className="text-xs text-indigo-600 underline cursor-pointer">
-                            {uploadingIndex === index
-                              ? 'Uploading...'
-                              : sig.faceImage?.image
-                                ? 'Replace'
-                                : 'Upload'}
+                          <input type="file" hidden accept="image/*" disabled={uploadingIndex === index}
+                            onChange={(e) => handleFaceImageUpload(e.target.files[0], index)} />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#005F5A] cursor-pointer hover:underline">
+                            <Upload size={10} />
+                            {uploadingIndex === index ? 'Uploading...' : sig.faceImage?.image ? 'Replace' : 'Upload'}
                           </span>
                         </label>
                       )}
                     </td>
 
-                    {/* DOCUMENT COLUMN */}
-                    <td className="border px-3 py-2 space-y-2">
-                      <a target='_blank' href={sig.doc?.image}>
+                    {/* Document */}
+                    <td className="px-4 py-3 space-y-1.5">
+                      <a target="_blank" href={sig.doc?.image}>
                         {sig.doc?.image ? (
-                          <img
-                            src={sig.doc.image}
-                            alt="Signer Doc"
-                            className="w-16 h-16 object-cover rounded border mx-auto"
-                          />
+                          <img src={sig.doc.image} alt="Doc" className="w-14 h-14 object-cover rounded-xl border border-gray-200" />
                         ) : (
-                          <span className="text-xs text-gray-400 block">
-                            No document
-                          </span>
+                          <span className="text-[11px] text-gray-400">None</span>
                         )}
                       </a>
-
                       {!isUser && (
                         <label className="block">
-                          <input
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            disabled={uploadingIndex === index}
-                            onChange={(e) =>
-                              handleSignerDocUpload(
-                                e.target.files[0],
-                                index
-                              )
-                            }
-                          />
-                          <span className="text-xs text-indigo-600 underline cursor-pointer">
-                            {uploadingIndex === index
-                              ? 'Uploading...'
-                              : sig.doc?.image
-                                ? 'Replace'
-                                : 'Upload'}
+                          <input type="file" hidden accept="image/*" disabled={uploadingIndex === index}
+                            onChange={(e) => handleSignerDocUpload(e.target.files[0], index)} />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#005F5A] cursor-pointer hover:underline">
+                            <Upload size={10} />
+                            {uploadingIndex === index ? 'Uploading...' : sig.doc?.image ? 'Replace' : 'Upload'}
                           </span>
                         </label>
                       )}
@@ -487,199 +311,176 @@ const Page = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </SectionCard>
 
-        {/* ================= JOIN ================= */}
-        <div className="p-6 border-t flex justify-between items-center gap-4">
-          <a
-            href={meeting.documentUrl?.pdf}
-            target="_blank"
-            className="text-indigo-600 underline text-sm"
-          >
-            View Main Document
-          </a>
-
-          <div className="flex gap-3">
-            {/* NOTARY ONLY */}
-            {!isUser && (
-              <button
-                onClick={() => setShowSignerModal(true)}
-                disabled={meeting.isSigned}
-                className={`px-6 py-3 rounded text-white
-    ${meeting.isSigned
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700'}
-  `}
-              >
-                {meeting.isSigned ? 'Already Sent for Signing' : 'Sign Document'}
-              </button>
-
-
-            )}
-
-            <button
-              onClick={handleJoin}
-              disabled={!canJoinMeeting || meeting.isMeetingEnded}
-              className={`px-6 py-3 rounded text-white
-    ${(!canJoinMeeting || meeting.isMeetingEnded)
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
-                }
-  `}
+        {/* ── Actions ── */}
+        <div className="bg-white rounded-3xl border border-[#005F5A]/10 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-[#005F5A] to-[#00A896]" />
+          <div className="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <a
+              href={meeting.documentUrl?.pdf}
+              target="_blank"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#005F5A] hover:underline"
             >
-              {meeting.isMeetingEnded
-                ? 'Meeting Ended'
-                : !canJoinMeeting
-                  ? 'Waiting for meeting time'
-                  : 'Join Meeting'}
-            </button>
+              <FileText size={15} /> View Main Document
+            </a>
 
+            <div className="flex flex-wrap gap-3">
+              {/* Notary only — Sign Document */}
+              {!isUser && (
+                <button
+                  onClick={() => setShowSignerModal(true)}
+                  disabled={meeting.isSigned}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${meeting.isSigned
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-br from-[#005F5A] to-[#004845] text-white shadow-md shadow-[#005F5A]/20 hover:shadow-[#005F5A]/40 hover:-translate-y-0.5'
+                    }`}
+                >
+                  {meeting.isSigned ? 'Already Sent for Signing' : <><ChevronRight size={15} /> Sign Document</>}
+                </button>
+              )}
+
+              {/* Join Meeting */}
+              <button
+                onClick={handleJoin}
+                disabled={!canJoinMeeting || meeting.isMeetingEnded}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${(!canJoinMeeting || meeting.isMeetingEnded)
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md shadow-green-600/20 hover:shadow-green-600/40 hover:-translate-y-0.5'
+                  }`}
+              >
+                <Video size={15} />
+                {meeting.isMeetingEnded ? 'Meeting Ended' : !canJoinMeeting ? 'Waiting for Meeting Time' : 'Join Meeting'}
+              </button>
+            </div>
           </div>
         </div>
 
       </div>
+
+      {/* ── SIGNER MODAL ── */}
       {showSignerModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-lg rounded-lg p-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="h-1 bg-gradient-to-r from-[#005F5A] to-[#00A896]" />
 
-            <h2 className="text-lg font-semibold mb-4">
-              Advocate Signer Details
-            </h2>
+            <div className="p-7">
+              {/* Modal header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#E6F4F3] rounded-xl flex items-center justify-center">
+                    <User size={18} className="text-[#005F5A]" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Georgia', serif" }}>
+                    Advocate Signer Details
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowSignerModal(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:text-gray-600 transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-            {/* NAME */}
-            <input
-              placeholder="Name"
-              value={signerForm.name}
-              disabled={isDisabled('name')}
-              className="w-full border p-2 mb-3 rounded bg-gray-50"
-            />
+              <div className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className={labelClass}>Name</label>
+                  <input placeholder="Name" value={signerForm.name} disabled={isDisabled('name')} className={inputClass} />
+                </div>
 
-            {/* EMAIL */}
-            <input
-              placeholder="Email"
-              value={signerForm.email}
-              disabled={isDisabled('email')}
-              className="w-full border p-2 mb-3 rounded bg-gray-50"
-            />
+                {/* Email */}
+                <div>
+                  <label className={labelClass}>Email</label>
+                  <input placeholder="Email" value={signerForm.email} disabled={isDisabled('email')} className={inputClass} />
+                </div>
 
-            {/* COUNTRY CODE */}
-            <input
-              placeholder="Country Code"
-              value={signerForm.CountryCode}
-              disabled
-              className="w-full border p-2 mb-3 rounded bg-gray-50"
-            />
+                {/* Country + Mobile */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelClass}>Country Code</label>
+                    <input value={signerForm.CountryCode} disabled className={inputClass} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className={labelClass}>Mobile</label>
+                    <input placeholder="Mobile Number" value={signerForm.MobileNo} disabled={isDisabled('MobileNo')} className={inputClass} />
+                  </div>
+                </div>
 
-            {/* MOBILE */}
-            <input
-              placeholder="Mobile Number"
-              value={signerForm.MobileNo}
-              disabled={isDisabled('MobileNo')}
-              className="w-full border p-2 mb-3 rounded bg-gray-50"
-            />
+                {/* DOB + Gender */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Date of Birth</label>
+                    <input type="date" value={signerForm.DOB}
+                      onChange={e => setSignerForm({ ...signerForm, DOB: e.target.value })}
+                      className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Gender</label>
+                    <select value={signerForm.Gender}
+                      onChange={e => setSignerForm({ ...signerForm, Gender: e.target.value })}
+                      className={inputClass}>
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
 
-            {/* DOB */}
-            <input
-              type="date"
-              value={signerForm.DOB}
-              onChange={e =>
-                setSignerForm({ ...signerForm, DOB: e.target.value })
-              }
-              className="w-full border p-2 mb-3 rounded"
-            />
+                {/* Signing Mode */}
+                <div>
+                  <label className={labelClass}>Signing Mode</label>
+                  <select value={signerForm.signingMode}
+                    onChange={e => setSignerForm({ ...signerForm, signingMode: e.target.value })}
+                    className={inputClass}>
+                    <option value="adhaarESign">Aadhaar eSign</option>
+                    <option value="dsc">DSC</option>
+                    <option value="NEKYC">NEKYC</option>
+                  </select>
+                </div>
 
-            {/* GENDER */}
-            <select
-              value={signerForm.Gender}
-              onChange={e =>
-                setSignerForm({ ...signerForm, Gender: e.target.value })
-              }
-              className="w-full border p-2 mb-3 rounded"
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
+                {/* Page Numbers */}
+                <div>
+                  <label className={labelClass}>Page Numbers</label>
+                  <input type="text" placeholder="e.g. 1,2,3" value={signerForm.pageInput}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const pagesArray = [...new Set(value.split(',').map(p => Number(p.trim())).filter(n => !isNaN(n) && n > 0))]
+                      setSignerForm({ ...signerForm, pageInput: value, PageNo: pagesArray })
+                    }}
+                    className={inputClass} />
+                  <p className="text-[10px] text-gray-400 mt-1">Comma separated page numbers</p>
+                </div>
 
-            {/* SIGNING MODE */}
-            <select
-              value={signerForm.signingMode}
-              onChange={e =>
-                setSignerForm({ ...signerForm, signingMode: e.target.value })
-              }
-              className="w-full border p-2 mb-3 rounded"
-            >
-              <option value="adhaarESign">Aadhaar eSign</option>
-              <option value="dsc">DSC</option>
-              <option value="NEKYC">NEKYC</option>
-              <option value="NEKYC">E-Sign</option>
-            </select>
+                {/* Sign Position */}
+                {/* <div>
+                  <label className={labelClass}>Sign Position</label>
+                  <select value={signerForm.signPosition}
+                    onChange={e => setSignerForm({ ...signerForm, signPosition: e.target.value })}
+                    className={inputClass}>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-center">Bottom Center</option>
+                  </select>
+                </div> */}
 
-
-            {/* PAGE NO */}
-            <input
-              type="text"
-              placeholder="Enter page numbers (e.g. 1,2,3)"
-              value={signerForm.pageInput}
-              onChange={(e) => {
-                const value = e.target.value
-
-                const pagesArray = [
-                  ...new Set(
-                    value
-                      .split(',')
-                      .map(p => Number(p.trim()))
-                      .filter(n => !isNaN(n) && n > 0)
-                  )
-                ]
-
-                setSignerForm({
-                  ...signerForm,
-                  pageInput: value,   // UI ke liye
-                  PageNo: pagesArray, // backend ke liye
-                })
-              }}
-              className="w-full border p-2 mb-3 rounded"
-            />
-
-
-
-            {/* SIGN POSITION */}
-            <select
-              value={signerForm.signPosition}
-              onChange={e =>
-                setSignerForm({ ...signerForm, signPosition: e.target.value })
-              }
-              className="w-full border p-2 mb-4 rounded"
-            >
-              <option value="bottom-left">Bottom Left</option>
-              <option value="bottom-right">Bottom Right</option>
-              <option value="bottom-center">Bottom Center</option>
-              {/*<option value="top-left">Top Left</option>
-              <option value="top-right">Top Right</option>
-              <option value="center">Center</option>*/}
-            </select>
-
-            {/* ACTIONS */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowSignerModal(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSignerSubmit}
-                className="px-4 py-2 bg-indigo-600 text-white rounded"
-              >
-                Continue & Sign
-              </button>
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setShowSignerModal(false)}
+                    className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all">
+                    Cancel
+                  </button>
+                  <button onClick={handleSignerSubmit}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold bg-gradient-to-br from-[#005F5A] to-[#004845] text-white rounded-xl shadow-md shadow-[#005F5A]/20 hover:shadow-[#005F5A]/40 hover:-translate-y-0.5 transition-all duration-200">
+                    Continue & Sign <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   )
 }

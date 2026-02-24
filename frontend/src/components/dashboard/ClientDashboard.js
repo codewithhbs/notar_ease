@@ -98,7 +98,7 @@ const ClientDashboard = () => {
               }`}
           >
             <div className="p-4 border-b flex items-center justify-between">
-              <h1 className="text-xl font-bold text-indigo-900">OD®</h1>
+              <h1 className="text-xl font-bold text-[#005F5A]">OD®</h1>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 text-sm"
@@ -111,7 +111,7 @@ const ClientDashboard = () => {
               <button
                 onClick={() => handleMobileTabChange("home")}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${activeTab === "home"
-                  ? "bg-indigo-100 text-indigo-900 font-semibold"
+                  ? "bg-indigo-100 text-[#005F5A] font-semibold"
                   : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
@@ -120,7 +120,7 @@ const ClientDashboard = () => {
               <button
                 onClick={() => handleMobileTabChange("meetings")}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${activeTab === "meetings"
-                  ? "bg-indigo-100 text-indigo-900 font-semibold"
+                  ? "bg-indigo-100 text-[#005F5A] font-semibold"
                   : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
@@ -129,7 +129,7 @@ const ClientDashboard = () => {
               <button
                 onClick={() => handleMobileTabChange("slots")}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${activeTab === "slots"
-                  ? "bg-indigo-100 text-indigo-900 font-semibold"
+                  ? "bg-indigo-100 text-[#005F5A] font-semibold"
                   : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
@@ -140,7 +140,7 @@ const ClientDashboard = () => {
                   <button
                     onClick={() => handleMobileTabChange("time-slots")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${activeTab === "profile"
-                      ? "bg-indigo-100 text-indigo-900 font-semibold"
+                      ? "bg-indigo-100 text-[#005F5A] font-semibold"
                       : "hover:bg-gray-100 text-gray-700"
                       }`}
                   >
@@ -149,7 +149,7 @@ const ClientDashboard = () => {
                   {/* <button
                     onClick={() => handleMobileTabChange("profile")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${activeTab === "profile"
-                      ? "bg-indigo-100 text-indigo-900 font-semibold"
+                      ? "bg-indigo-100 text-[#005F5A] font-semibold"
                       : "hover:bg-gray-100 text-gray-700"
                       }`}
                   >
@@ -173,13 +173,13 @@ const ClientDashboard = () => {
         {/* Desktop Sidebar */}
         <aside className="hidden md:block w-64 bg-white shadow-lg">
           <div className="p-4 border-b">
-            <h1 className="text-2xl font-bold text-indigo-900">OD®</h1>
+            <h1 className="text-2xl font-bold text-[#005F5A]">OD®</h1>
           </div>
           <nav className="p-4 space-y-2">
             <button
               onClick={() => handleTabChange("home")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === "home"
-                ? "bg-indigo-100 text-indigo-900 font-semibold"
+                ? "bg-indigo-100 text-[#005F5A] font-semibold"
                 : "hover:bg-gray-100 text-gray-700"
                 }`}
             >
@@ -188,7 +188,7 @@ const ClientDashboard = () => {
             <button
               onClick={() => handleTabChange("meetings")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === "meetings"
-                ? "bg-indigo-100 text-indigo-900 font-semibold"
+                ? "bg-indigo-100 text-[#005F5A] font-semibold"
                 : "hover:bg-gray-100 text-gray-700"
                 }`}
             >
@@ -197,7 +197,7 @@ const ClientDashboard = () => {
             <button
               onClick={() => handleTabChange("slots")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === "slots"
-                ? "bg-indigo-100 text-indigo-900 font-semibold"
+                ? "bg-indigo-100 text-[#005F5A] font-semibold"
                 : "hover:bg-gray-100 text-gray-700"
                 }`}
             >
@@ -208,7 +208,7 @@ const ClientDashboard = () => {
                 <button
                   onClick={() => handleTabChange("time-slots")}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === "time-slots"
-                    ? "bg-indigo-100 text-indigo-900 font-semibold"
+                    ? "bg-indigo-100 text-[#005F5A] font-semibold"
                     : "hover:bg-gray-100 text-gray-700"
                     }`}
                 >
@@ -217,7 +217,7 @@ const ClientDashboard = () => {
                 {/* <button
                   onClick={() => handleTabChange("slots")}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === "slots"
-                    ? "bg-indigo-100 text-indigo-900 font-semibold"
+                    ? "bg-indigo-100 text-[#005F5A] font-semibold"
                     : "hover:bg-gray-100 text-gray-700"
                     }`}
                 >
@@ -239,7 +239,7 @@ const ClientDashboard = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col h-full overflow-hidden">
           {/* Header */}
-          <header className="h-16 bg-linear-to-r from-indigo-900 to-blue-900 text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+          <header className="h-16 bg-[#005F5A] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
             <div className="flex flex-col justify-between items-center md:flex-row-reverse gap-3">
               {/* Top row: logo + hamburger + user (mobile), user only (desktop) */}
               <div className="flex items-center justify-between w-full md:w-auto">

@@ -2,26 +2,51 @@
 import { useEffect, useState } from "react";
 import api from "@/utils/api";
 import { toast } from "react-toastify";
+import { Plus, Trash2, Upload, FileText, User, Mail, Phone, Hash, CreditCard, ChevronRight } from "lucide-react";
+
+function SectionCard({ title, subtitle, icon: Icon, children, accent = false }) {
+  return (
+    <div className="bg-white rounded-3xl border border-[#005F5A]/10 shadow-sm overflow-hidden">
+      <div className={`h-1 ${accent ? "bg-gradient-to-r from-[#C9A84C] to-[#E8C56A]" : "bg-gradient-to-r from-[#005F5A] to-[#00A896]"}`} />
+      <div className="p-8">
+        <div className="flex items-center gap-3 mb-6">
+          {Icon && (
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${accent ? "bg-[#FBF5E6]" : "bg-[#E6F4F3]"}`}>
+              <Icon size={18} className={accent ? "text-[#C9A84C]" : "text-[#005F5A]"} />
+            </div>
+          )}
+          <div>
+            <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: "'Georgia', serif" }}>
+              {title}
+            </h2>
+            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const inputClass =
+  "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#005F5A] focus:ring-2 focus:ring-[#005F5A]/10 transition-all duration-200 bg-gray-50 focus:bg-white";
+
+const labelClass = "block text-[10px] font-bold tracking-[0.08em] uppercase text-[#005F5A] mb-1.5";
 
 const Page = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
 
-  /* =========================
-     FORM STATE
-  ========================= */
   const [form, setForm] = useState({
     meetingTitle: "",
     meetingDescription: "",
     signingMode: "adhaarESign",
-
     pdfReadCheckbox: false,
     dateOfAppointmentCheckbox: false,
     readyForSigningCheckbox: false,
     electronicSignatureCheckbox: false,
     agreedToTermsCheckbox: false,
-
     advocateId: "",
     timeSlotId: "",
     startTime: "",
@@ -30,17 +55,11 @@ const Page = () => {
 
   const [signatories, setSignatories] = useState([]);
 
-  /* =========================
-     LOAD USER + DEFAULT SIGNER
-  ========================= */
   useEffect(() => {
     const u = localStorage.getItem("user");
     if (!u) return;
-
     const parsedUser = JSON.parse(u);
     setUser(parsedUser);
-    console.log("parsedUser", parsedUser)
-
     setSignatories([
       {
         name: parsedUser.name || "",
@@ -53,15 +72,11 @@ const Page = () => {
         signPosition: "bottom-left",
         signingMode: "adhaarESign",
         isDefault: true,
-        idProof: null, // 👈 added
+        idProof: null,
       },
     ]);
-
   }, []);
 
-  /* =========================
-     HANDLERS
-  ========================= */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
@@ -77,17 +92,9 @@ const Page = () => {
     setSignatories((prev) => [
       ...prev,
       {
-        name: "",
-        email: "",
-        CountryCode: "+91",
-        MobileNo: "",
-        DOB: "",
-        Gender: "",
-        PageNo: [],
-        signPosition: "bottom-left",
-        signingMode: "adhaarESign",
-        isDefault: false,
-        idProof: null,
+        name: "", email: "", CountryCode: "+91", MobileNo: "",
+        DOB: "", Gender: "", PageNo: [], signPosition: "bottom-left",
+        signingMode: "adhaarESign", isDefault: false, idProof: null,
       },
     ]);
   };
@@ -103,21 +110,12 @@ const Page = () => {
     form.readyForSigningCheckbox &&
     form.electronicSignatureCheckbox;
 
-  /* =========================
-     SUBMIT
-  ========================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!pdfFile) {
-      toast.error("PDF is required");
-      return;
-    }
-
+    if (!pdfFile) { toast.error("PDF is required"); return; }
     try {
       toast.loading("Meeting creating...", { toastId: "create" });
       setLoading(true);
-
       const fd = new FormData();
       fd.append("userId", user?._id);
       fd.append("meetingTitle", form.meetingTitle);
@@ -127,446 +125,392 @@ const Page = () => {
       fd.append("timeSlotId", form.timeSlotId);
       fd.append("startTime", form.startTime);
       fd.append("endTime", form.endTime);
-
-      // 🔥 Signatories (remove isDefault before sending)
       signatories.forEach((s, i) => {
         const { isDefault, idProof, ...payload } = s;
-
         Object.entries(payload).forEach(([k, v]) => {
-          if (Array.isArray(v)) {
-            fd.append(`signatories[${i}][${k}]`, JSON.stringify(v));
-          } else {
-            fd.append(`signatories[${i}][${k}]`, v);
-          }
+          fd.append(`signatories[${i}][${k}]`, Array.isArray(v) ? JSON.stringify(v) : v);
         });
-
-
-        // 👇 send idProof as file
-        if (idProof) {
-          fd.append(`signatories[${i}][idProof]`, idProof);
-        }
+        if (idProof) fd.append(`signatories[${i}][idProof]`, idProof);
       });
-
-
       Object.entries(form).forEach(([k, v]) => {
         if (typeof v === "boolean") fd.append(k, v.toString());
       });
-
       fd.append("documentUrl", pdfFile);
-
       const res = await api.post("/api/meeting/create", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       const meetingId = res?.data?.meeting?._id;
-
       toast.success("Meeting created successfully");
       window.location.href = `/dashboard/schedule/${meetingId}`;
-
     } catch (err) {
-      console.log("Internal server error", err)
       toast.error(err.response?.data?.message || "Server error");
     } finally {
       setLoading(false);
     }
   };
 
-  /* =========================
-     UI
-  ========================= */
+  const signingModes = [
+    { value: "adhaarESign", label: "Aadhaar eSign", desc: "Sign using your Aadhaar-linked mobile OTP" },
+    { value: "dsc", label: "Digital Signature Certificate (DSC)", desc: "Sign using a USB-based DSC token" },
+    { value: "NEKYC", label: "NE-KYC", desc: "For NRIs — sign using passport-based video KYC" },
+  ];
+
+  const checkboxes = [
+    { name: "pdfReadCheckbox", label: "I have read and prepared the PDF as per the guide." },
+    { name: "dateOfAppointmentCheckbox", label: "The PDF is dated for the appointment." },
+    { name: "readyForSigningCheckbox", label: "The PDF is ready for signing." },
+    { name: "electronicSignatureCheckbox", label: "The PDF is electronically signed." },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold mb-8">Create Meeting</h1>
+    <div className="max-w-5xl mx-auto px-4 py-10 font-sans">
 
-      <form onSubmit={handleSubmit} className="space-y-10">
+      {/* Page Header */}
+      <div className="mb-10">
+        <p className="text-[#00A896] text-xs font-bold tracking-[0.15em] uppercase mb-1">Dashboard</p>
+        <h1 className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "'Georgia', serif" }}>
+          Create Meeting
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">Fill in the details below to schedule your notarization meeting.</p>
+      </div>
 
-        {/* ================= Meeting Info ================= */}
-        <section className="bg-white rounded-2xl border p-6 space-y-4">
-          <h2 className="text-lg font-medium">Meeting Information</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-          <input
-            name="meetingTitle"
-            placeholder="Meeting Name *"
-            value={form.meetingTitle}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-lg px-4 py-2"
-          />
-
-          <textarea
-            name="meetingDescription"
-            placeholder="Meeting Description"
-            value={form.meetingDescription}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border rounded-lg px-4 py-2"
-          />
-        </section>
-
-        {/* ================= Signing Mode ================= */}
-        <section className="bg-white rounded-2xl border p-6 space-y-4">
-          <h2 className="text-lg font-medium">Signing Mode</h2>
-
-          {[
-            ["adhaarESign", "Aadhaar eSign"],
-            ["dsc", "Digital Signature Certificate (DSC)"],
-            ["NEKYC", "NE-KYC"],
-          ].map(([value, label]) => (
-            <label key={value} className="flex gap-3 items-center text-sm">
+        {/* ── Meeting Info ── */}
+        <SectionCard title="Meeting Information" subtitle="Provide a name and description for this meeting" icon={FileText}>
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Meeting Name *</label>
               <input
-                type="radio"
-                name="signingMode"
-                value={value}
-                checked={form.signingMode === value}
+                name="meetingTitle"
+                placeholder="e.g. Property Sale Agreement"
+                value={form.meetingTitle}
                 onChange={handleChange}
+                required
+                className={inputClass}
               />
-              {label}
-            </label>
-          ))}
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            The signatories will have the option(s) to sign the document based on
-            your choice of signing mode(s) above. For example, if you choose
-            "Aadhaar eSign or DSC", then the signatories will have the option of
-            signing using Aadhaar eSign or the USB token based DSC.
-          </p>
-        </section>
-
-        {/* ================= Signatories ================= */}
-        <section className="bg-white rounded-2xl border p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium">Signatories</h2>
-            <button
-              type="button"
-              onClick={addSignatory}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
-            >
-              + Add Signatory
-            </button>
+            </div>
+            <div>
+              <label className={labelClass}>Meeting Description</label>
+              <textarea
+                name="meetingDescription"
+                placeholder="Brief description of the document or purpose..."
+                value={form.meetingDescription}
+                onChange={handleChange}
+                rows={3}
+                className={inputClass}
+              />
+            </div>
           </div>
+        </SectionCard>
 
-          <div className="bg-green-50 border rounded-lg p-3 text-sm">
-            Organizer is a default signatory. Name, email and mobile cannot be edited.
+        {/* ── Signing Mode ── */}
+        <SectionCard title="Signing Mode" subtitle="Choose how signatories will sign the document" icon={CreditCard}>
+          <div className="space-y-3">
+            {signingModes.map(({ value, label, desc }) => (
+              <label
+                key={value}
+                className={`flex items-start gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
+                  form.signingMode === value
+                    ? "border-[#005F5A] bg-[#E6F4F3]"
+                    : "border-gray-200 hover:border-[#005F5A]/40 hover:bg-gray-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="signingMode"
+                  value={value}
+                  checked={form.signingMode === value}
+                  onChange={handleChange}
+                  className="mt-1 accent-[#005F5A]"
+                />
+                <div>
+                  <p className={`text-sm font-semibold ${form.signingMode === value ? "text-[#005F5A]" : "text-gray-800"}`}>
+                    {label}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                </div>
+              </label>
+            ))}
+            <p className="text-xs text-gray-500 leading-relaxed pt-1">
+              The signatories will have the option(s) to sign the document based on your choice above.
+            </p>
           </div>
+        </SectionCard>
 
-          {signatories.map((s, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 border rounded-xl p-4"
-            >
-              {/* Name */}
-              <div className="space-y-1">
-                <label
-                  htmlFor={`name-${i}`}
-                  className="text-xs font-medium text-gray-600"
-                >
-                  Name
-                </label>
-                {s.isDefault && (
-                  <span className="text-xs text-green-600 block">
-                    Organizer (Default Signer)
-                  </span>
-                )}
-                <input
-                  id={`name-${i}`}
-                  placeholder="Name"
-                  value={s.name}
-                  // disabled={s.isDefault}
-                  onChange={(e) => updateSignatory(i, "name", e.target.value)}
-                  className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
-                />
-              </div>
+        {/* ── Signatories ── */}
+        <SectionCard title="Signatories" subtitle="Add the people who need to sign this document" icon={User}>
+          <div className="space-y-4">
 
-              {/* Email */}
-              <div className="space-y-1">
-                <label
-                  htmlFor={`email-${i}`}
-                  className="text-xs font-medium text-gray-600"
-                >
-                  Email
-                </label>
-                <input
-                  id={`email-${i}`}
-                  placeholder="Email"
-                  value={s.email}
-                  // disabled={s.isDefault}
-                  onChange={(e) => updateSignatory(i, "email", e.target.value)}
-                  className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
-                />
-              </div>
+            {/* Info bar */}
+            <div className="flex items-center gap-2 bg-[#E6F4F3] border border-[#005F5A]/15 rounded-xl px-4 py-3">
+              <div className="w-2 h-2 bg-[#005F5A] rounded-full shrink-0" />
+              <p className="text-xs text-[#005F5A] font-medium">
+                Organizer is a default signatory. Name, email and mobile cannot be edited.
+              </p>
+            </div>
 
-              {/* Mobile Number */}
-              <div className="space-y-1">
-                <label
-                  htmlFor={`mobile-${i}`}
-                  className="text-xs font-medium text-gray-600"
-                >
-                  Mobile Number
-                </label>
-                <input
-                  id={`mobile-${i}`}
-                  type="tel"
-                  placeholder="Mobile No"
-                  value={s.MobileNo}
-                  // disabled={s.isDefault}
-                  onChange={(e) => updateSignatory(i, "MobileNo", e.target.value)}
-                  className="border rounded px-3 py-2 disabled:bg-gray-100 w-full"
-                />
-              </div>
-
-              {/* Page Numbers */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Page Numbers
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter page numbers (e.g. 1,2,5)"
-                  value={s.pageNoInput}
-                  onBlur={() => {
-                    const clean = s.PageNo.join(",");
-                    updateSignatory(i, "pageNoInput", clean);
-                  }}
-                  onChange={(e) => {
-                    const value = e.target.value;
-
-                    // allow only numbers & commas
-                    if (!/^[0-9,]*$/.test(value)) return;
-
-                    // update RAW input
-                    updateSignatory(i, "pageNoInput", value);
-
-                    // convert to number array (safe)
-                    const pages = value
-                      .split(",")
-                      .map((p) => Number(p))
-                      .filter((p) => !isNaN(p) && p > 0);
-
-                    updateSignatory(i, "PageNo", pages);
-                  }}
-                  className="border rounded px-3 py-2 w-full"
-                />
-
-                <p className="text-xs text-gray-500">
-                  Use comma separated page numbers
-                </p>
-              </div>
-
-
-
-              {/* Sign Position + Remove */}
-              <div className="space-y-1">
-                {/* <label
-                  htmlFor={`position-${i}`}
-                  className="text-xs font-medium text-gray-600"
-                >
-                  Sign Position
-                </label>
-                <select
-                  id={`position-${i}`}
-                  value={s.signPosition}
-                  onChange={(e) =>
-                    updateSignatory(i, "signPosition", e.target.value)
-                  }
-                  className="border rounded px-3 py-2 w-full"
-                >
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="bottom-center">Bottom Center</option>
-                </select> */}
-
-                {/* ID Proof Upload */}
-                <div className="space-y-1">
-                  {/* Dynamic Label */}
-                  <label className="text-xs font-medium text-gray-600">
-                    {form.signingMode === "NEKYC"
-                      ? "Passport (Image / PDF)"
-                      : form.signingMode === "dsc"
-                        ? "DSC Certificate (Image / PDF)"
-                        : "Aadhaar Card (Image / PDF)"}
-                  </label>
-
-                  {/* File Input */}
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-
-                      // ✅ Allow image OR pdf
-                      const isImage = file.type.startsWith("image/");
-                      const isPdf = file.type === "application/pdf";
-
-                      if (!isImage && !isPdf) {
-                        toast.error("Only Image or PDF files allowed");
-                        return;
-                      }
-
-                      // ✅ Max 5MB
-                      if (file.size > 5 * 1024 * 1024) {
-                        toast.error("Max file size is 5MB");
-                        return;
-                      }
-
-                      updateSignatory(i, "idProof", file);
-                    }}
-                    className="border rounded px-3 py-2 w-full"
-                  />
-
-                  {/* ===== Preview ===== */}
-
-                  {s.idProof && (
-                    <div className="mt-2">
-                      {/* Image Preview */}
-                      {s.idProof.type.startsWith("image/") ? (
-                        <img
-                          src={URL.createObjectURL(s.idProof)}
-                          alt="preview"
-                          className="h-20 w-32 object-cover border rounded"
-                        />
-                      ) : (
-                        /* PDF Preview */
-                        <iframe
-                          src={URL.createObjectURL(s.idProof)}
-                          title="PDF Preview"
-                          className="h-32 w-40 border rounded"
-                        />
-                      )}
+            {signatories.map((s, i) => (
+              <div
+                key={i}
+                className={`border rounded-2xl p-6 space-y-4 ${
+                  s.isDefault ? "border-[#005F5A]/20 bg-[#E6F4F3]/30" : "border-gray-200"
+                }`}
+              >
+                {/* Row header */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-[#005F5A] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {i + 1}
                     </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      {s.isDefault ? "You (Organizer)" : `Signatory ${i + 1}`}
+                    </span>
+                    {s.isDefault && (
+                      <span className="text-[10px] bg-[#005F5A] text-white px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  {!s.isDefault && (
+                    <button
+                      type="button"
+                      onClick={() => removeSignatory(i)}
+                      className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                    >
+                      <Trash2 size={13} /> Remove
+                    </button>
                   )}
                 </div>
 
-                {!s.isDefault && (
-                  <button
-                    type="button"
-                    onClick={() => removeSignatory(i)}
-                    className="text-red-600 text-sm mt-1"
-                  >
-                    Remove Signer
-                  </button>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Name */}
+                  <div>
+                    <label className={labelClass}><User size={10} className="inline mr-1" />Name</label>
+                    <input
+                      placeholder="Full name"
+                      value={s.name}
+                      onChange={(e) => updateSignatory(i, "name", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className={labelClass}><Mail size={10} className="inline mr-1" />Email</label>
+                    <input
+                      placeholder="email@example.com"
+                      value={s.email}
+                      onChange={(e) => updateSignatory(i, "email", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Mobile */}
+                  <div>
+                    <label className={labelClass}><Phone size={10} className="inline mr-1" />Mobile Number</label>
+                    <input
+                      type="tel"
+                      placeholder="+91 9898989898"
+                      value={s.MobileNo}
+                      onChange={(e) => updateSignatory(i, "MobileNo", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Page Numbers */}
+                  <div>
+                    <label className={labelClass}><Hash size={10} className="inline mr-1" />Page Numbers</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1,2,5"
+                      value={s.pageNoInput}
+                      onBlur={() => updateSignatory(i, "pageNoInput", s.PageNo.join(","))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (!/^[0-9,]*$/.test(value)) return;
+                        updateSignatory(i, "pageNoInput", value);
+                        const pages = value.split(",").map((p) => Number(p)).filter((p) => !isNaN(p) && p > 0);
+                        updateSignatory(i, "PageNo", pages);
+                      }}
+                      className={inputClass}
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">Comma separated page numbers</p>
+                  </div>
+
+                  {/* Signing Mode */}
+                  <div>
+                    <label className={labelClass}>Signing Mode</label>
+                    <select
+                      value={s.signingMode}
+                      onChange={(e) => updateSignatory(i, "signingMode", e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="adhaarESign">Aadhaar eSign</option>
+                      <option value="dsc">DSC</option>
+                      <option value="NEKYC">NE-KYC</option>
+                    </select>
+                  </div>
+
+                  {/* ID Proof */}
+                  <div>
+                    <label className={labelClass}>
+                      {form.signingMode === "NEKYC"
+                        ? "Passport (Image / PDF)"
+                        : form.signingMode === "dsc"
+                        ? "DSC Certificate (Image / PDF)"
+                        : "Aadhaar Card (Image / PDF)"}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const isImage = file.type.startsWith("image/");
+                        const isPdf = file.type === "application/pdf";
+                        if (!isImage && !isPdf) { toast.error("Only Image or PDF files allowed"); return; }
+                        if (file.size > 5 * 1024 * 1024) { toast.error("Max file size is 5MB"); return; }
+                        updateSignatory(i, "idProof", file);
+                      }}
+                      className="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#E6F4F3] file:text-[#005F5A] hover:file:bg-[#005F5A] hover:file:text-white file:transition-colors file:cursor-pointer border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 cursor-pointer"
+                    />
+                    {s.idProof && (
+                      <div className="mt-2">
+                        {s.idProof.type.startsWith("image/") ? (
+                          <img src={URL.createObjectURL(s.idProof)} alt="preview" className="h-20 w-32 object-cover border border-gray-200 rounded-xl" />
+                        ) : (
+                          <iframe src={URL.createObjectURL(s.idProof)} title="PDF Preview" className="h-32 w-full border border-gray-200 rounded-xl" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+            ))}
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Signing Mode
-                </label>
+            {/* Add button */}
+            <button
+              type="button"
+              onClick={addSignatory}
+              className="flex items-center gap-2 px-5 py-2.5 border-2 border-dashed border-[#005F5A]/30 text-[#005F5A] text-sm font-semibold rounded-xl hover:border-[#005F5A] hover:bg-[#E6F4F3] transition-all duration-200 w-full justify-center"
+            >
+              <Plus size={16} /> Add Another Signatory
+            </button>
+          </div>
+        </SectionCard>
 
-                <select
-                  value={s.signingMode}
-                  onChange={(e) =>
-                    updateSignatory(i, "signingMode", e.target.value)
-                  }
-                  className="border rounded px-3 py-2 w-full"
-                >
-                  <option value="adhaarESign">Aadhaar eSign</option>
-                  <option value="dsc">Digital Signature Certificate (DSC)</option>
-                  <option value="NEKYC">NE-KYC</option>
-                </select>
-              </div>
+        {/* ── Document Preparation ── */}
+        <SectionCard title="Document Preparation" subtitle="Confirm your document is ready before uploading" icon={FileText} accent>
+          <div className="space-y-3">
+            {checkboxes.map(({ name, label }) => (
+              <label
+                key={name}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-150 ${
+                  form[name]
+                    ? "border-[#005F5A]/30 bg-[#E6F4F3]/60"
+                    : "border-gray-200 hover:border-[#005F5A]/20"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  name={name}
+                  checked={form[name]}
+                  onChange={handleChange}
+                  className="mt-0.5 accent-[#005F5A] shrink-0"
+                />
+                <span className="text-sm text-gray-700">{label}</span>
+              </label>
+            ))}
+            <p className="text-xs text-[#005F5A] font-semibold flex items-center gap-1.5 pt-1">
+              <ChevronRight size={12} />
+              Before uploading, please check our Document Preparation Guide.
+            </p>
+          </div>
+        </SectionCard>
 
+        {/* ── PDF Upload ── */}
+        <div className={`transition-opacity duration-300 ${!canUploadPDF ? "opacity-40 pointer-events-none" : ""}`}>
+          <SectionCard title="Upload Document" subtitle="Upload the PDF document to be notarized" icon={Upload}>
+            <div className="space-y-4">
+              <label
+                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-10 cursor-pointer transition-all duration-200 ${
+                  canUploadPDF
+                    ? "border-[#005F5A]/30 hover:border-[#005F5A] hover:bg-[#E6F4F3]/40"
+                    : "border-gray-200 cursor-not-allowed"
+                }`}
+              >
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  disabled={!canUploadPDF}
+                  className="hidden"
+                  onChange={(e) => setPdfFile(e.target.files[0])}
+                />
+                <div className="w-14 h-14 bg-[#E6F4F3] rounded-2xl flex items-center justify-center mb-4">
+                  <Upload size={24} className="text-[#005F5A]" />
+                </div>
+                <p className="text-sm font-semibold text-gray-800">
+                  {pdfFile ? pdfFile.name : "Click to upload PDF"}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Only PDF files are supported</p>
+              </label>
+
+              {pdfFile && (
+                <div className="border border-gray-200 rounded-2xl overflow-hidden h-[400px]">
+                  <iframe
+                    src={URL.createObjectURL(pdfFile)}
+                    className="w-full h-full"
+                    title="PDF Preview"
+                  />
+                </div>
+              )}
             </div>
-          ))}
+          </SectionCard>
+        </div>
 
-        </section>
-
-        {/* ================= Document Preparation ================= */}
-        <section className="bg-white rounded-2xl border p-6 space-y-3">
-          <h2 className="text-lg font-medium">Document Preparation</h2>
-
-          <label className="flex gap-3 text-sm">
-            <input type="checkbox" name="pdfReadCheckbox"
-              checked={form.pdfReadCheckbox} onChange={handleChange} />
-            I have read and prepared the PDF as per the guide.
-          </label>
-
-          <label className="flex gap-3 text-sm">
-            <input type="checkbox" name="dateOfAppointmentCheckbox"
-              checked={form.dateOfAppointmentCheckbox} onChange={handleChange} />
-            The PDF is dated for the appointment.
-          </label>
-
-          <label className="flex gap-3 text-sm">
-            <input type="checkbox" name="readyForSigningCheckbox"
-              checked={form.readyForSigningCheckbox} onChange={handleChange} />
-            The PDF is ready for signing.
-          </label>
-
-          <label className="flex gap-3 text-sm">
-            <input type="checkbox" name="electronicSignatureCheckbox"
-              checked={form.electronicSignatureCheckbox} onChange={handleChange} />
-            The PDF is electronically signed.
-          </label>
-
-          <p className="text-sm text-indigo-600 font-medium">
-            Before uploading a document, please check our Document Preparation Guide.
-          </p>
-        </section>
-
-        {/* ================= PDF Upload ================= */}
-        <section
-          className={`bg-white rounded-2xl border p-6 space-y-4 ${!canUploadPDF && "opacity-50"
-            }`}
+        {/* ── Terms ── */}
+        <label
+          className={`flex items-start gap-4 bg-white border rounded-2xl p-6 cursor-pointer transition-all duration-200 overflow-hidden ${
+            form.agreedToTermsCheckbox ? "border-[#005F5A]/30" : "border-gray-200"
+          }`}
         >
-          <h2 className="text-lg font-medium">Upload Document</h2>
-
-          <label
-            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition
-      ${canUploadPDF ? "hover:border-indigo-500" : "cursor-not-allowed"}
-    `}
-          >
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={!canUploadPDF}
-              className="hidden"
-              onChange={(e) => setPdfFile(e.target.files[0])}
-            />
-
-            <div className="text-center space-y-2">
-              <p className="text-sm font-medium">
-                {pdfFile ? pdfFile.name : "Click to upload PDF"}
-              </p>
-              <p className="text-xs text-gray-500">
-                Only PDF files are supported
-              </p>
-            </div>
-          </label>
-
-          {/* PDF Preview */}
-          {pdfFile && (
-            <div className="border rounded-xl overflow-hidden h-[400px]">
-              <iframe
-                src={URL.createObjectURL(pdfFile)}
-                className="w-full h-full"
-                title="PDF Preview"
-              />
-            </div>
-          )}
-        </section>
-
-
-        {/* ================= Terms ================= */}
-        <label className="flex gap-3 items-start bg-white border rounded-2xl p-6 text-sm">
-          <input type="checkbox" name="agreedToTermsCheckbox"
+          <div className={`h-1 absolute top-0 left-0 right-0 ${form.agreedToTermsCheckbox ? "bg-gradient-to-r from-[#005F5A] to-[#00A896]" : "bg-gray-200"}`} />
+          <input
+            type="checkbox"
+            name="agreedToTermsCheckbox"
             checked={form.agreedToTermsCheckbox}
-            onChange={handleChange} className="mt-1" />
-          I hereby confirm that if the PDF contains affidavits, the signatories are
-          aware of the contents of accompanying pleadings / documents, which are
-          ready to produce before the notary, if requested, during the appointment.
+            onChange={handleChange}
+            className="mt-1 accent-[#005F5A] shrink-0"
+          />
+          <p className="text-sm text-gray-700 leading-relaxed">
+            I hereby confirm that if the PDF contains affidavits, the signatories are
+            aware of the contents of accompanying pleadings / documents, which are
+            ready to produce before the notary, if requested, during the appointment.
+          </p>
         </label>
 
-        {/* ================= Action ================= */}
-        <div className="flex justify-end">
+        {/* ── Submit ── */}
+        <div className="flex justify-end pb-6">
           <button
             type="submit"
             disabled={loading || !form.agreedToTermsCheckbox}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+            className="flex items-center gap-2 px-10 py-4 bg-gradient-to-br from-[#005F5A] to-[#004845] text-white font-semibold text-sm rounded-xl shadow-lg shadow-[#005F5A]/25 hover:shadow-[#005F5A]/45 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            {loading ? "Creating..." : "Create Meeting"}
+            {loading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Creating...
+              </>
+            ) : (
+              <>Create Meeting <ChevronRight size={15} /></>
+            )}
           </button>
         </div>
+
       </form>
     </div>
   );

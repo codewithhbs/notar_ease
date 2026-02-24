@@ -17,7 +17,7 @@ const { PDFDocument } = require("pdf-lib");
 
 function getStampPosition(page, position, stampWidth, stampHeight) {
   const { width, height } = page.getSize();
-  const margin = 60;
+  const margin = 30;
 
   switch (position) {
     case "bottom-right":

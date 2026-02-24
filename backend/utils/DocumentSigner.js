@@ -52,69 +52,52 @@ function getPositionCoordinates(position) {
         "middle-center": { Left: 246, Top: 451, Width: 366, Height: 376 },
         "middle-right": { Left: 468, Top: 451, Width: 588, Height: 376 },
 
-        "bottom-left": { Left: 59, Top: 149, Width: 179, Height: 57 },
+        "bottom-left": { Left: 18, Top: 198, Width: 91, Height: 135 },
         "bottom-center": { Left: 210, Top: 144, Width: 346, Height: 52 },
-        "bottom-right": { Left: 396, Top: 162, Width: 541, Height: 69 },
+        "bottom-right": { Left: 380, Top: 112, Width: 500, Height: 26 },
     };
 
     return map[position] || map["bottom-right"];
 }
 
-// ---------------- POSITION ENGINE ---------------- //
+// 🔥 MANUAL ADJUSTMENT MAP
+function getManualAdjustments(position, count) {
 
-function scalePosition(pos, page) {
-    const baseWidth = 800;   // coordinate tool reference
-    const baseHeight = 1000;
+    const manualAdjustMap = {
 
-    const scaleX = page.width / baseWidth;
-    const scaleY = page.height / baseHeight;
+        "bottom-left": [
+            { leftShift: 24, width: 109, height: 108, topShift: 186 },
+            { leftShift: 127, width: 212, height: 111, topShift: 189 },
+            { leftShift: 223, width: 308, height: 113, topShift: 191 },
+            { leftShift: 15, width: 119, height: 25, topShift: 103 },
+            { leftShift: 129, width: 233, height: 25, topShift: 103 },
+            { leftShift: 239, width: 343, height: 25, topShift: 103 },
+        ],
 
-    return {
-        Left: Math.round(pos.Left * scaleX),
-        Top: Math.round(pos.Top * scaleY),
-        Width: Math.round(pos.Width * scaleX),
-        Height: Math.round(pos.Height * scaleY),
+        "bottom-center": [
+            { leftShift: 0, width: 346, height: 52, topShift: 0 },
+            { leftShift: 360, width: 200, height: 52, topShift: 0 },
+        ],
+
+        "bottom-right": [
+            { leftShift: 0, width: 541, height: 69, topShift: 0 },
+            { leftShift: 560, width: 200, height: 69, topShift: 0 },
+        ],
+
+        "top-left": [
+            { leftShift: 0, width: 390, height: 65, topShift: 0 },
+            { leftShift: 400, width: 200, height: 65, topShift: 0 },
+        ],
     };
+
+    const layouts = manualAdjustMap[position];
+
+    if (!layouts) return null;
+
+    return layouts[count] || layouts[0];
 }
-
-
-// 🔹 Dynamic Bottom-Left Grid
-function getDynamicBottomLeftPosition(index, total) {
-    const baseLeft = 60;
-    const baseTop = 150;
-
-    const maxPerRow = 4;      // 4 signatures per row
-    const width = 130;
-    const height = 60;
-
-    const gapX = 10;
-    const gapY = 70;
-
-    const row = Math.floor(index / maxPerRow);
-    const col = index % maxPerRow;
-
-    return {
-        Left: baseLeft + col * (width + gapX),
-        Top: baseTop + row * gapY,
-        Width: width,
-        Height: height,
-    };
-}
-
-
-// 🔹 Notary Fixed Bottom-Right
-function getNotaryPosition() {
-    return {
-        Left: 500,   // adjust via coordinate tool
-        Top: 150,
-        Width: 180,
-        Height: 60,
-    };
-}
-
 
 async function buildSigningPayload(meeting) {
-
     const advocateEmail = meeting.advocateId.email;
 
     const signatoryEmails = [];
@@ -126,34 +109,26 @@ async function buildSigningPayload(meeting) {
         responseType: "arraybuffer",
     });
 
-    // 2️⃣ Page sizes
+    // 2️⃣ Get page sizes
     const pageSizes = await getPdfPageSizes(pdfRes.data);
+    let signMode;
 
-    // 3️⃣ Separate signers
-    const notarySigner = meeting.signatories.find(
-        s => s.role === "notary"
-    );
+    // 🔥 TRACK SAME PAGE + SAME POSITION
+    const positionTracker = {};
 
-    const normalSigners = meeting.signatories.filter(
-        s => s.role !== "notary"
-    );
-
-    let allSignersOrdered = [...normalSigners];
-    if (notarySigner) allSignersOrdered.push(notarySigner);
-
-
-    // ---------------- LOOP ---------------- //
-
-    allSignersOrdered.forEach((signer, index) => {
+    meeting.signatories.forEach((signer, index) => {
 
         signatoryEmails.push(signer.email);
 
-        // 🔹 Signature Mode
-        let signMode = "1";
+        let signMode = "";
 
-        if (signer.signingMode === "adhaarESign") signMode = "12";
-        else if (signer.signingMode === "dsc") signMode = "1";
-        else if (signer.signingMode === "NEKYC") signMode = "3";
+        if (signer.signingMode === "adhaarESign") {
+            signMode = "12";
+        } else if (signer.signingMode === "dsc") {
+            signMode = "1";
+        } else if (signer.signingMode === "NEKYC") {
+            signMode = "3";
+        }
 
         signatureSettings.push({
             ModeOfSignature: signMode,
@@ -165,53 +140,58 @@ async function buildSigningPayload(meeting) {
             Automatedsigningenabled: false,
         });
 
-
-        // 🔥 MULTI-PAGE
+        // 🔥 MULTIPLE PAGES SUPPORT
         signer.PageNo.forEach((pageNo) => {
 
             const pageIndex = pageNo - 1;
             const page = pageSizes[pageIndex];
             if (!page) return;
 
-            let rawPos;
+            const basePos = getPositionCoordinates(signer.signPosition);
 
-            // ---------------- POSITION DECIDER ---------------- //
+            const trackerKey = `${pageNo}-${signer.signPosition}`;
 
-            if (signer.role === "notary") {
-
-                rawPos = getNotaryPosition();
-
-            } else {
-
-                rawPos = getDynamicBottomLeftPosition(
-                    index,
-                    normalSigners.length
-                );
-
+            if (!positionTracker[trackerKey]) {
+                positionTracker[trackerKey] = 0;
             }
 
-            // 🔹 Scale to page size
-            const pos = scalePosition(rawPos, page);
+            const count = positionTracker[trackerKey];
+
+            // 🔥 GET MANUAL ADJUSTMENT
+            const manual = getManualAdjustments(
+                signer.signPosition,
+                count
+            );
+
+            // DEFAULT VALUES
+            let adjustedLeft = basePos.Left;
+            let adjustedTop = basePos.Top;
+            let adjustedWidth = basePos.Width;
+            let adjustedHeight = basePos.Height;
+
+            if (manual) {
+                adjustedLeft = basePos.Left + manual.leftShift;
+                adjustedTop = basePos.Top + manual.topShift;
+                adjustedWidth = manual.width;
+                adjustedHeight = manual.height;
+            }
+
+            positionTracker[trackerKey]++;
 
             controlDetails.push({
                 PageNo: String(pageNo),
                 ControlID: 4,
                 AssignedTo: index + 1,
-                Left: pos.Left,
-                Top: pos.Top,
-                Width: pos.Width,
-                Height: pos.Height,
+                Left: Math.round(adjustedLeft),
+                Top: Math.round(adjustedTop),
+                Width: Math.round(adjustedWidth),
+                Height: Math.round(adjustedHeight),
             });
 
         });
-
     });
 
-
-    // ---------------- BASE64 ---------------- //
-
     const base64PDF = Buffer.from(pdfRes.data).toString("base64");
-
 
     return {
         EmailId: advocateEmail,

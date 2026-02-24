@@ -104,7 +104,7 @@ export default function DemoMeetingModal({ onClose }) {
             <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden relative max-h-[90vh] sm:max-h-none">
 
                 {/* ================= HEADER ================= */}
-                <div className="flex justify-between items-center px-6 sm:px-8 py-4 sm:py-5 border-b bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+                <div className="flex justify-between items-center px-6 sm:px-8 py-4 sm:py-5 border-b bg-[#005F5A] text-white">
                     <div>
                         <h2 className="text-lg sm:text-2xl font-bold">
                             Omm Documentation – Online Demo Session
@@ -151,14 +151,14 @@ export default function DemoMeetingModal({ onClose }) {
                                 <div key={s} className="flex-1 flex items-center">
                                     <div
                                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-                      ${step >= s ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-500"}`}
+                      ${step >= s ? "bg-[#005F5A] text-white" : "bg-gray-200 text-gray-500"}`}
                                     >
                                         {s}
                                     </div>
                                     {i !== 2 && (
                                         <div
                                             className={`flex-1 h-[2px] mx-3
-                        ${step > s ? "bg-indigo-600" : "bg-gray-200"}`}
+                        ${step > s ? "bg-[#005F5A]" : "bg-gray-200"}`}
                                         />
                                     )}
                                 </div>
