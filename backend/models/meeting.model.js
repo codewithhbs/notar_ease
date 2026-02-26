@@ -188,6 +188,14 @@ const meetingSchema = new mongoose.Schema({
       type: String,
     },
   },
+  documentCertificate:{
+    pdf: {
+      type: String,
+    },
+    public_id: {
+      type: String,
+    },
+  }
 
 }, { timestamps: true });
 

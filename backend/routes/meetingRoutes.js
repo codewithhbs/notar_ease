@@ -65,5 +65,6 @@ router.put("/upload-face-image-of-signer/:id", authenticateAccessToken, upload.s
 router.post("/send-document-for-sign/:id", authenticateAccessToken, meetingController.sendDocumentForSign);
 router.post("/adv-sign-detail/:id", meetingController.advSignDetail);
 router.post("/sign-document-for-notary/:id", meetingController.doStampDuty);
+router.post("/final-report", meetingController.finalReport);
 
-module.exports = router;
+module.exports = router;                

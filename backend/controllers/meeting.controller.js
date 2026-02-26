@@ -4,7 +4,7 @@ const signedDocumentModel = require("../models/signedDocument.model");
 const meetingEndQueue = require("../queues/meetingEnd.queue");
 const meetingReminderQueue = require("../queues/meetingReminder.queue");
 const { uploadPDF, uploadImage, deleteImageFromCloudinary, uploadFileToCloudinary } = require("../utils/Cloudnary");
-const { initiateDocumentSigning } = require("../utils/DocumentSigner");
+const { initiateDocumentSigning, downloadSignedDocument } = require("../utils/DocumentSigner");
 const getPdfPageCount = require("../utils/getPdfPageCount");
 const createGoogleMeet = require("../utils/googleMeet");
 const logMeetingAudit = require("../utils/logMeetingAudit");
@@ -14,6 +14,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const { PDFDocument } = require("pdf-lib");
+const sendEmail = require("../utils/SendEmail");
 
 function getStampPosition(page, position, stampWidth, stampHeight) {
   const { width, height } = page.getSize();
@@ -1160,49 +1161,99 @@ async function uploadDocOfSigner(req, res) {
 
 async function doStampDuty(req, res) {
   try {
+    console.log("========================================");
+    console.log("🚀 STAMP DUTY PROCESS START");
+    console.log("Request Params:", req.params);
+    console.log("========================================");
+
     const { id } = req.params;
 
+    // ==============================
+    // 1️⃣ Fetch Meeting
+    // ==============================
+    console.log("🔍 Fetching meeting by ID:", id);
+
     const meeting = await Meeting.findById(id);
+
     if (!meeting) {
+      console.log("❌ Meeting not found");
       return res.status(404).json({
         success: false,
-        message: "Meeting not found"
+        message: "Meeting not found",
       });
     }
 
-    const pdfUrl = meeting?.documentUrl?.pdf;
-    // const pdfUrl = 'https://res.cloudinary.com/duxsqzrot/image/upload/v1769852947/dummy_cb9sqa.pdf';
+    console.log("✅ Meeting found:", meeting._id);
+
+    const pdfUrl = meeting?.stampedDocumentUrl?.pdf;
+
     if (!pdfUrl) {
+      console.log("❌ stampedDocumentUrl missing");
       return res.status(400).json({
         success: false,
-        message: "Document not signed yet"
+        message: "Document not signed yet",
       });
     }
 
-    const { PageNo, signPosition } = meeting.notaryDetails;
+    console.log("📄 PDF URL:", pdfUrl);
 
-    // 1️⃣ Download signed PDF
+    const { PageNo, signPosition } =
+      meeting.notaryDetails || {};
+
+    console.log("📝 Stamp Pages:", PageNo);
+    console.log("📍 Stamp Position:", signPosition);
+
+    // ==============================
+    // 2️⃣ Download PDF
+    // ==============================
+    console.log("⬇️ Downloading signed PDF...");
+
     const pdfResponse = await axios.get(pdfUrl, {
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
     });
 
-    // console.log("PDF Content-Type:", pdfResponse.headers["content-type"]);
+    console.log(
+      "✅ PDF Downloaded. Size:",
+      pdfResponse.data.length
+    );
 
+    const pdfDoc = await PDFDocument.load(
+      pdfResponse.data
+    );
 
-    const pdfDoc = await PDFDocument.load(pdfResponse.data);
+    console.log("📘 PDF Loaded Successfully");
 
-    // 2️⃣ Load stamp image
-    const stampPath = path.join(process.cwd(), "public/stamp.png");
-    const stampBytes = fs.readFileSync(stampPath);
-    // const stampImage = await pdfDoc.embedJpg(stampBytes);
-    const stampImage = await pdfDoc.embedPng(stampBytes);
+    // ==============================
+    // 3️⃣ Load Stamp Image
+    // ==============================
+    const stampPath = path.join(
+      process.cwd(),
+      "public/stamp.png"
+    );
+
+    console.log("🖼 Loading stamp image from:", stampPath);
+
+    const stampBytes =
+      fs.readFileSync(stampPath);
+
+    const stampImage =
+      await pdfDoc.embedPng(stampBytes);
+
+    console.log("✅ Stamp image embedded");
 
     const stampWidth = 110;
     const stampHeight = 110;
 
-    // 3️⃣ Apply stamp on given pages
-    for (let pageIndex of PageNo) {
-      const page = pdfDoc.getPage(pageIndex - 1);
+    // ==============================
+    // 4️⃣ Apply Stamp
+    // ==============================
+    console.log("🖊 Applying stamp to pages...");
+
+    for (let pageIndex of PageNo || []) {
+      console.log("➡ Stamping page:", pageIndex);
+
+      const page =
+        pdfDoc.getPage(pageIndex - 1);
 
       const { x, y } = getStampPosition(
         page,
@@ -1211,45 +1262,395 @@ async function doStampDuty(req, res) {
         stampHeight
       );
 
+      console.log("📌 Stamp Coordinates:", { x, y });
+
       page.drawImage(stampImage, {
         x,
         y,
         width: stampWidth,
-        height: stampHeight
+        height: stampHeight,
       });
     }
 
-    // 4️⃣ Save PDF to buffer
-    const stampedPdfBuffer = Buffer.from(await pdfDoc.save());
+    console.log("✅ Stamping completed");
 
-    // 5️⃣ Upload to Cloudinary
-    const uploaded = await uploadPDF(stampedPdfBuffer);
+    // ==============================
+    // 5️⃣ Save + Upload
+    // ==============================
+    console.log("💾 Saving stamped PDF...");
 
-    meeting.documentUrl = {
-      pdf: uploaded.pdf,
-      public_id: uploaded.public_id
-    }
+    const stampedPdfBuffer = Buffer.from(
+      await pdfDoc.save()
+    );
 
-    // 6️⃣ Save in meeting
+    console.log(
+      "📦 Stamped PDF size:",
+      stampedPdfBuffer.length
+    );
+
+    console.log("☁️ Uploading stamped PDF...");
+
+    const uploaded =
+      await uploadPDF(stampedPdfBuffer);
+
+    console.log("✅ Uploaded:", uploaded.pdf);
+
     meeting.stampedDocumentUrl = {
       pdf: uploaded.pdf,
-      public_id: uploaded.public_id
+      public_id: uploaded.public_id,
     };
 
     await meeting.save();
+    console.log("💾 Meeting updated with stamped URL");
+
+    // ==============================
+    // 6️⃣ Prepare Mail Data
+    // ==============================
+    console.log("📨 Preparing email recipients...");
+
+    const signatories =
+      meeting.signatories || [];
+
+    console.log(
+      "👥 Total Signatories:",
+      signatories.length
+    );
+
+    const recipients =
+      signatories.slice(0, -1);
+
+    console.log(
+      "📧 Mail will be sent to:",
+      recipients.map((r) => r.email)
+    );
+
+    const stampedPdfLink =
+      meeting.stampedDocumentUrl.pdf;
+
+    const certificatePdfLink =
+      meeting.documentCertificate?.pdf;
+
+    const faceImage =
+      signatories[0]?.faceImage?.image;
+
+    const docImage =
+      signatories[0]?.doc?.image;
+
+    console.log("📎 Attachments:");
+    console.log("Stamped PDF:", stampedPdfLink);
+    console.log("Certificate:", certificatePdfLink);
+    console.log("Face Image:", faceImage);
+    console.log("Doc Image:", docImage);
+
+    // ==============================
+    // 7️⃣ Download Attachments
+    // ==============================
+    const downloadFile = async (url, label) => {
+      if (!url) {
+        console.log(`⚠️ ${label} missing`);
+        return null;
+      }
+
+      console.log(`⬇️ Downloading ${label}...`);
+
+      const res = await axios.get(url, {
+        responseType: "arraybuffer",
+      });
+
+      console.log(
+        `✅ ${label} downloaded. Size:`,
+        res.data.length
+      );
+
+      return Buffer.from(res.data);
+    };
+
+    const [
+      stampedBuffer,
+      certificateBuffer,
+      faceBuffer,
+      docBuffer,
+    ] = await Promise.all([
+      downloadFile(stampedPdfLink, "Stamped PDF"),
+      downloadFile(
+        certificatePdfLink,
+        "Certificate PDF"
+      ),
+      downloadFile(faceImage, "Face Image"),
+      downloadFile(docImage, "Doc Image"),
+    ]);
+
+    // ==============================
+    // 8️⃣ Send Emails
+    // ==============================
+    console.log("📤 Sending emails...");
+
+    for (const signer of recipients) {
+      console.log("➡ Sending mail to:", signer.email);
+
+      const mailStatus = await sendEmail({
+        email: signer.email,
+        subject:
+          "Document Signed Successfully - Omm Documentation",
+
+        message: `
+          <h2>Document Signed Successfully</h2>
+          <p>Hello ${signer.name},</p>
+          <p>Your document has been successfully signed through <b>Omm Documentation</b>.</p>
+          <p>Please find attached stamped document and certificate.</p>
+          <br/>
+          <p>Regards,<br/>Omm Documentation Team</p>
+        `,
+
+        attachments: [
+          {
+            filename: "StampedDocument.pdf",
+            content: stampedBuffer,
+          },
+          {
+            filename: "Certificate.pdf",
+            content: certificateBuffer,
+          },
+          {
+            filename: "FaceImage.png",
+            content: faceBuffer,
+          },
+          {
+            filename: "DocumentImage.png",
+            content: docBuffer,
+          },
+        ].filter((a) => a.content),
+      });
+
+      console.log(
+        mailStatus
+          ? "✅ Mail sent"
+          : "❌ Mail failed"
+      );
+    }
+
+    console.log("========================================");
+    console.log("🎉 STAMP DUTY PROCESS COMPLETED");
+    console.log("========================================");
 
     return res.status(200).json({
       success: true,
-      message: "Stamp added & uploaded successfully",
-      stampedDocumentUrl: meeting.stampedDocumentUrl
+      message:
+        "Stamp added & mail sent successfully",
+      stampedDocumentUrl:
+        meeting.stampedDocumentUrl,
     });
-
   } catch (error) {
-    console.error("Stamp Duty Error:", error);
+    console.error("❌ STAMP DUTY ERROR:", error);
+    console.error("Stack:", error.stack);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error.message
+      error: error.message,
+    });
+  }
+}
+
+async function finalReport(req, res) {
+  try {
+    console.log("========== FINAL REPORT START ==========");
+    console.log("Request Body:", req.body);
+
+    const { WorkflowID } = req.body;
+
+    // ==============================
+    // 1️⃣ Validate WorkflowID
+    // ==============================
+    if (!WorkflowID) {
+      return res.status(400).json({
+        success: false,
+        message: "WorkflowID is required",
+      });
+    }
+
+    console.log("✅ WorkflowID:", WorkflowID);
+
+    // ==============================
+    // 2️⃣ Download Signed Doc + Certificate
+    // ==============================
+    console.log("⬇️ Calling downloadSignedDocument...");
+    const signedDoc = await downloadSignedDocument(WorkflowID);
+
+    if (!signedDoc) {
+      return res.status(404).json({
+        success: false,
+        message: "Signed document response empty",
+      });
+    }
+
+    // ==============================
+    // 3️⃣ Extract Signed Files
+    // ==============================
+    const files =
+      signedDoc?.signedDocument?.Response?.FileList || [];
+
+    console.log("📂 Signed Files Count:", Array.isArray(files) ? files.length : 0);
+
+    if (!Array.isArray(files) || files.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No signed documents found",
+      });
+    }
+
+    // ==============================
+    // 4️⃣ Extract Certificate Safely
+    // ==============================
+    let certificateFile = null;
+
+    const certificateResponse = signedDoc?.certificate?.Response;
+
+    if (!certificateResponse) {
+      return res.status(404).json({
+        success: false,
+        message: "Certificate response missing",
+      });
+    }
+
+    // Case 1: If Response is array
+    if (Array.isArray(certificateResponse)) {
+      certificateFile = certificateResponse[0];
+      console.log("📂 Certificate Files Count:", certificateResponse.length);
+    }
+    // Case 2: If Response is single object
+    else if (typeof certificateResponse === "object") {
+      certificateFile = certificateResponse;
+      console.log("📂 Certificate Files Count: 1");
+    }
+    // Case 3: If Response is base64 string (wrong structure)
+    else if (typeof certificateResponse === "string") {
+      certificateFile = { Base64FileData: certificateResponse };
+      console.log("📂 Certificate Base64 Length:", certificateResponse.length);
+    }
+
+    if (!certificateFile?.Base64FileData) {
+      return res.status(404).json({
+        success: false,
+        message: "Certificate file not found",
+      });
+    }
+
+    // ==============================
+    // 5️⃣ Start Parallel Uploads
+    // ==============================
+
+    const certificateUploadPromise = uploadPDF(
+      Buffer.from(certificateFile.Base64FileData, "base64")
+    );
+
+    const uploadedFilesPromise = Promise.all(
+      files.map(async (file, index) => {
+        try {
+          console.log(
+            `🚀 Uploading file ${index + 1}:`,
+            file.DocumentName
+          );
+
+          if (!file?.Base64FileData) {
+            console.log("❌ Base64 missing for:", file.DocumentName);
+            return null;
+          }
+
+          const buffer = Buffer.from(file.Base64FileData, "base64");
+
+          console.log("📦 Buffer size:", buffer.length);
+
+          const uploadResult = await uploadPDF(buffer);
+
+          console.log("☁️ Upload success:", uploadResult?.pdf);
+
+          return {
+            DocumentName: file.DocumentName,
+            url: uploadResult?.pdf,
+            public_id: uploadResult?.public_id,
+          };
+        } catch (err) {
+          console.error("❌ Upload error:", err.message);
+          return null;
+        }
+      })
+    );
+
+    // ==============================
+    // 6️⃣ Wait for Uploads
+    // ==============================
+    const [uploadedCertificate, uploadedFilesRaw] =
+      await Promise.all([
+        certificateUploadPromise,
+        uploadedFilesPromise,
+      ]);
+
+    const uploadedFiles = uploadedFilesRaw.filter(Boolean);
+
+    console.log("✅ All files uploaded:", uploadedFiles.length);
+
+    // ==============================
+    // 7️⃣ Find Meeting
+    // ==============================
+    const meeting = await Meeting.findOne({
+      $or: [
+        { signedDocumentWorkflowId: WorkflowID },
+        { signedDocumentWorkflowId: Number(WorkflowID) },
+      ],
+    });
+
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Meeting not found for the given WorkflowID",
+      });
+    }
+
+    console.log("✅ Meeting found:", meeting._id);
+
+    // ==============================
+    // 8️⃣ Save URLs
+    // ==============================
+    meeting.stampedDocumentUrl = uploadedFiles[0]
+      ? {
+        pdf: uploadedFiles[0].url,
+        public_id: uploadedFiles[0].public_id,
+      }
+      : null;
+
+    meeting.documentCertificate = uploadedCertificate
+      ? {
+        pdf: uploadedCertificate.pdf,
+        public_id: uploadedCertificate.public_id,
+      }
+      : null;
+
+    await meeting.save();
+
+    console.log("💾 Meeting updated successfully");
+    console.log("========== FINAL REPORT SUCCESS ==========");
+
+    // ==============================
+    // 9️⃣ Final Response
+    // ==============================
+    return res.status(200).json({
+      success: true,
+      message: "Final Report generated successfully",
+      data: {
+        signedDocuments: uploadedFiles,
+        certificate: uploadedCertificate,
+      },
+    });
+  } catch (error) {
+    console.error("❌ FINAL REPORT ERROR:", error.message);
+    console.error("Stack:", error.stack);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
     });
   }
 }
@@ -1266,5 +1667,6 @@ module.exports = {
   advSignDetail,
   sendDocumentForSign,
   uploadFaceImage,
-  doStampDuty
+  doStampDuty,
+  finalReport
 };

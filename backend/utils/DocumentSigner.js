@@ -3,9 +3,11 @@ const SECRET_KEY = process.env.SIGNER_SECRET_KEY;
 const AUTH_URL = process.env.SIGNER_AUTH_URL;
 const SIGN_URL = process.env.SIGNER_SIGN_URL;
 const DOWNLOAD_URL = process.env.SIGNER_DOWNLOAD_URL;
+const SIGNER_CERTIFICATE_URL = process.env.SIGNER_CERTIFICATE_URL;
 
 const axios = require("axios");
 const getPdfPageSizes = require("./getPdfPageSizes");
+const signedDocumentModel = require("../models/signedDocument.model");
 
 let AUTH_TOKEN = null;
 let TOKEN_EXPIRY = null;
@@ -52,7 +54,7 @@ function getPositionCoordinates(position) {
         "middle-center": { Left: 246, Top: 451, Width: 366, Height: 376 },
         "middle-right": { Left: 468, Top: 451, Width: 588, Height: 376 },
 
-        "bottom-left": { Left: 18, Top: 198, Width: 91, Height: 135 },
+        "bottom-left": { Left: 8, Top: 102, Width: 128, Height: 14 },
         "bottom-center": { Left: 210, Top: 144, Width: 346, Height: 52 },
         "bottom-right": { Left: 380, Top: 112, Width: 500, Height: 26 },
     };
@@ -66,12 +68,12 @@ function getManualAdjustments(position, count) {
     const manualAdjustMap = {
 
         "bottom-left": [
-            { leftShift: 24, width: 109, height: 108, topShift: 186 },
-            { leftShift: 127, width: 212, height: 111, topShift: 189 },
-            { leftShift: 223, width: 308, height: 113, topShift: 191 },
-            { leftShift: 15, width: 119, height: 25, topShift: 103 },
-            { leftShift: 129, width: 233, height: 25, topShift: 103 },
-            { leftShift: 239, width: 343, height: 25, topShift: 103 },
+            { leftShift: 8, width: 128, height: 14, topShift: 102 }, //bottom left
+            { leftShift: 140, width: 260, height: 14, topShift: 102 }, //bottom right
+            { leftShift: 10, width: 130, height: 109, topShift: 197 }, //bottom up left
+            { leftShift: 140, width: 260, height: 109, topShift: 197 }, // bottom up right
+            // { leftShift: 129, width: 233, height: 25, topShift: 103 },
+            // { leftShift: 239, width: 343, height: 25, topShift: 103 },
         ],
 
         "bottom-center": [
@@ -247,47 +249,101 @@ async function initiateDocumentSigning(meeting) {
 }
 
 async function downloadSignedDocument(workflowId) {
-    console.log("DOWNLOAD_URL =>", DOWNLOAD_URL);
-    console.log("workflowId =>", workflowId);
+    console.log("========== DOWNLOAD SIGNED DOCUMENT ==========");
+
     if (!workflowId) {
         throw new Error("WorkflowId is required");
     }
 
     let token = await getAuthToken();
+    console.log("🔐 Initial Token =>", token ? "Token Received" : "No Token");
 
-    const payload = {
-        WorkflowId: workflowId,
-    };
+    const payload = { WorkflowId: workflowId };
+
+    const signorData = await signedDocumentModel.findOne({ WorkflowId: workflowId });
+
+    if (!signorData) {
+        throw new Error("No signor data found");
+    }
+
+    const DocumentId = signorData.DocumentIdList[0];
+    console.log("📄 DocumentId =>", DocumentId);
+
+    const certificateUrl = `${SIGNER_CERTIFICATE_URL}?documentId=${DocumentId}`;
+
+    console.log("SIGNER_CERTIFICATE_URL =>", SIGNER_CERTIFICATE_URL);
+    console.log("certificateUrl =>", certificateUrl);
 
     try {
-        const res = await axios.post(DOWNLOAD_URL, payload, {
+        // ==============================
+        // 1️⃣ Signed Document Download
+        // ==============================
+        const signedRes = await axios.post(DOWNLOAD_URL, payload, {
             headers: {
                 Authorization: `basic ${token}`,
                 "Content-Type": "application/json",
             },
         });
 
-        return res.data;
+        if (signedRes.data?.IsSuccess === false) {
+            throw new Error(signedRes.data.Message || "Download failed");
+        }
+
+        console.log("✅ Signed document downloaded");
+
+        // ==============================
+        // 2️⃣ Certificate Download (WITH TOKEN)
+        // ==============================
+        const certRes = await axios.get(certificateUrl, {
+            headers: {
+                Authorization: `basic ${token}`,
+            },
+        });
+
+        console.log("✅ Certificate downloaded", certRes.data);
+
+        return {
+            signedDocument: signedRes.data,
+            certificate: certRes.data,
+        };
+
     } catch (err) {
-        // 🔁 TOKEN EXPIRED → regenerate & retry
+        console.log("⚠️ First attempt failed", err);
+
+        // 🔁 Token Expired Case
         if (
             err.response?.data?.Message &&
             err.response.data.Message.includes("Token Expired")
         ) {
+            console.log("🔁 Token expired. Generating new token...");
+
             token = await generateAuthToken();
 
-            const retry = await axios.post(DOWNLOAD_URL, payload, {
+            // Retry Signed Document
+            const retrySigned = await axios.post(DOWNLOAD_URL, payload, {
                 headers: {
                     Authorization: `basic ${token}`,
                     "Content-Type": "application/json",
                 },
             });
 
-            if (retry.data.IsSuccess === false) {
-                throw new Error(retry.data.Message || "Failed to download signed document");
+            if (retrySigned.data?.IsSuccess === false) {
+                throw new Error("Retry failed for signed document");
             }
 
-            return retry.data;
+            // Retry Certificate
+            const retryCert = await axios.get(certificateUrl, {
+                headers: {
+                    Authorization: `basic ${token}`,
+                },
+            });
+
+            console.log("✅ Retry Success");
+
+            return {
+                signedDocument: retrySigned.data,
+                certificate: retryCert.data,
+            };
         }
 
         throw err;

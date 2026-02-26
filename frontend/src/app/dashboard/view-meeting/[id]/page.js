@@ -108,8 +108,9 @@ const Page = () => {
     try {
       toast.loading('Processing...', { toastId: 'signer' })
       const addSignerRes = await api.post(`/api/meeting/adv-sign-detail/${id}`, signerForm)
-      if (addSignerRes.data?.success === true) await api.post(`/api/meeting/sign-document-for-notary/${id}`)
-      await api.post(`/api/meeting/send-document-for-sign/${id}`)
+      // if (addSignerRes.data?.success === true) await api.post(`/api/meeting/sign-document-for-notary/${id}`)
+      if (addSignerRes.data?.success === true) await api.post(`/api/meeting/send-document-for-sign/${id}`)
+      // await api.post(`/api/meeting/send-document-for-sign/${id}`)
       toast.update('signer', { render: 'Document sent for signing', type: 'success', isLoading: false })
       setMeeting(prev => ({ ...prev, isSigned: true }))
       setShowSignerModal(false)
@@ -158,6 +159,17 @@ const Page = () => {
       setMeeting(prev => { const updated = { ...prev }; updated.signatories[signerIndex] = res.data.signer; return updated })
     } catch (err) { toast.error(err.response?.data?.message || 'Upload failed') }
     finally { setUploadingIndex(null) }
+  }
+
+  const handleStamp = async () => {
+    try {
+      toast.loading('Stamping...', { toastId: 'stamp' })
+      await api.post(`/api/meeting/sign-document-for-notary/${id}`)
+      toast.update('stamp', { render: 'Meeting stamped', type: 'success', isLoading: false })
+    } catch (err) {
+      console.log("Internal server error", err)
+      toast.update('stamp', { render: err.response?.data?.message || 'Stamp failed', type: 'error', isLoading: false })
+    }
   }
 
   if (loading || !meeting || !user) {
@@ -332,8 +344,8 @@ const Page = () => {
                   onClick={() => setShowSignerModal(true)}
                   disabled={meeting.isSigned}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${meeting.isSigned
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-br from-[#005F5A] to-[#004845] text-white shadow-md shadow-[#005F5A]/20 hover:shadow-[#005F5A]/40 hover:-translate-y-0.5'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-br from-[#005F5A] to-[#004845] text-white shadow-md shadow-[#005F5A]/20 hover:shadow-[#005F5A]/40 hover:-translate-y-0.5'
                     }`}
                 >
                   {meeting.isSigned ? 'Already Sent for Signing' : <><ChevronRight size={15} /> Sign Document</>}
@@ -345,13 +357,24 @@ const Page = () => {
                 onClick={handleJoin}
                 disabled={!canJoinMeeting || meeting.isMeetingEnded}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${(!canJoinMeeting || meeting.isMeetingEnded)
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md shadow-green-600/20 hover:shadow-green-600/40 hover:-translate-y-0.5'
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md shadow-green-600/20 hover:shadow-green-600/40 hover:-translate-y-0.5'
                   }`}
               >
                 <Video size={15} />
                 {meeting.isMeetingEnded ? 'Meeting Ended' : !canJoinMeeting ? 'Waiting for Meeting Time' : 'Join Meeting'}
               </button>
+
+              {!isUser && meeting?.isSigned && (
+                <button
+                  onClick={handleStamp}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 
+    bg-gradient-to-br from-[#5f1300] to-[#481400] text-white shadow-md shadow-[#005F5A]/20 
+    hover:shadow-[#005F5A]/40 hover:-translate-y-0.5"
+                >
+                  <ChevronRight size={15} /> Close Meeting
+                </button>
+              )}
             </div>
           </div>
         </div>
