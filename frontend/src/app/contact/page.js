@@ -66,10 +66,10 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: "Call Us",
-      value: "+91 9898989898",
+      value: "011-42487609,9810262463",
       sub: "Available 24×7 · Instant support",
       linkLabel: "Call Now",
-      href: "tel:+919898989898",
+      href: "tel:+91 9810262804",
       iconBg: "bg-[#E6F4F3]",
       iconColor: "text-[#005F5A]",
       valueColor: "text-[#005F5A]",
@@ -80,10 +80,10 @@ export default function ContactPage() {
     {
       icon: MessageCircle,
       title: "WhatsApp Us",
-      value: "+91 9898989898",
+      value: "+91 9810262804",
       sub: "Fastest response · Share documents directly",
       linkLabel: "Message on WhatsApp",
-      href: "https://wa.me/919898989898",
+      href: "https://wa.me/919810262804",
       iconBg: "bg-green-50",
       iconColor: "text-green-600",
       valueColor: "text-green-600",
@@ -95,10 +95,10 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: "Email Us",
-      value: "support@ommdoc.com",
+      value: "omdocument33@gmail.com",
       sub: "Response within 5 minutes during business hours",
       linkLabel: "Send Email",
-      href: "mailto:support@ommdocumentation.com",
+      href: "mailto:omdocument33@gmail.com",
       iconBg: "bg-[#FBF5E6]",
       iconColor: "text-[#C9A84C]",
       valueColor: "text-[#C9A84C]",
@@ -350,7 +350,7 @@ export default function ContactPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className={inputClass}
-                    placeholder="+91 9898989898"
+                    placeholder="+91 9810262804"
                   />
                 </div>
 

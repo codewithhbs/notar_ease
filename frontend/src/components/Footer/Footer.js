@@ -14,8 +14,8 @@ export default function Footer() {
               {/* <p className="font-semibold text-white">Contact Us</p>
                 <p>1233 Main Street</p>
                 <p>Potary, NY 92360</p> */}
-              <p className="mt-3">Phone: +91 9898989898</p>
-              <p>Email: support@ommdocumentation.com</p>
+              <p className="mt-3">Phone: 011-42487609,9810262804,9810262463</p>
+              <p>Email: omdocument33@gmail.com</p>
             </div>
           </div>
 
@@ -26,7 +26,7 @@ export default function Footer() {
               <li><a href="/about" className="hover:text-[#d4a574]">About</a></li>
               <li><a href="/pricing" className="hover:text-[#d4a574]">Pricing</a></li>
               <li><a href="/contact" className="hover:text-[#d4a574]">Contact</a></li>
-              <li><a href="/resources" className="hover:text-[#d4a574]">Resources</a></li>
+              {/* <li><a href="/resources" className="hover:text-[#d4a574]">Resources</a></li> */}
               {/* <li><a href="/privacy-policy" className="hover:text-[#d4a574]">Privacy Policy</a></li> */}
             </ul>
           </div>

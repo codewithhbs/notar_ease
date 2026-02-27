@@ -155,7 +155,7 @@ const ProfileUpdate = () => {
               <Input label="First Name" name="name" icon={User} placeholder="John" value={formData.name} onChange={handleChange} />
               <Input label="Last Name" name="familyName" placeholder="Doe" value={formData.familyName} onChange={handleChange} />
             </div>
-            <Input label="Phone" name="phone" icon={Phone} type="tel" placeholder="+91 9898989898" value={formData.phone} onChange={handleChange} />
+            <Input label="Phone" name="phone" icon={Phone} type="tel" placeholder="+91 9810262804" value={formData.phone} onChange={handleChange} />
             <Input label="Address" name="address" icon={MapPin} placeholder="Your address" value={formData.address} onChange={handleChange} />
             <Input label="Country" name="country" icon={Globe} placeholder="IN" value={formData.country} onChange={handleChange} />
           </div>

@@ -311,7 +311,7 @@ const Page = () => {
                     <label className={labelClass}><Phone size={10} className="inline mr-1" />Mobile Number</label>
                     <input
                       type="tel"
-                      placeholder="+91 9898989898"
+                      placeholder="+91 9810262804"
                       value={s.MobileNo}
                       onChange={(e) => updateSignatory(i, "MobileNo", e.target.value)}
                       className={inputClass}

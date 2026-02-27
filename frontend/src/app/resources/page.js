@@ -228,7 +228,7 @@ export default function Page() {
               <a href="" className="bg-white text-indigo-700 px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 transition flex items-center gap-3">
                 Start Notarisation <ArrowRight />
               </a>
-              <a href="mailto:hello@ommdocumentation.com" className="border-2 border-white px-10 py-5 rounded-xl font-bold text-lg hover:bg-white hover:text-indigo-700 transition flex items-center gap-3">
+              <a href="mailto:omdocument33@gmail.com" className="border-2 border-white px-10 py-5 rounded-xl font-bold text-lg hover:bg-white hover:text-indigo-700 transition flex items-center gap-3">
                 <Mail className="w-6 h-6" /> Contact Support
               </a>
             </div>

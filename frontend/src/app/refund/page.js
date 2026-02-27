@@ -130,7 +130,7 @@ export default function Page() {
             For any questions or refund-related requests, please contact us at:
           </p>
           <p className="mt-2 font-semibold text-gray-900">
-            hello@ommdocumentation.com
+            omdocument33@gmail.com
           </p>
           <p className="mt-2 text-gray-600">
             We aim to respond within 3-5 working days.

@@ -43,7 +43,7 @@ export default function HomeTab({ onTabChange, openMeetingModal }) {
         icon: Mail,
         title: "Contact Us",
         desc: "We're here to help!",
-        btn: "hello@ommdocumentation.com",
+        btn: "omdocument33@gmail.com",
         mail: true,
       },
     ];
@@ -75,7 +75,7 @@ export default function HomeTab({ onTabChange, openMeetingModal }) {
         icon: Mail,
         title: "Contact Us",
         desc: "We're here to help!",
-        btn: "hello@ommdocumentation.com",
+        btn: "omdocument33@gmail.com",
         mail: true,
       },
     ];

@@ -268,10 +268,10 @@ const ClientDashboard = () => {
               <p className="text-xs sm:text-sm max-w-4xl text-center md:text-start">
                 If you have any feedback or problems, contact us at{" "}
                 <a
-                  href="mailto:hello@ommdocumentation.com"
+                  href="mailto:omdocument33@gmail.com"
                   className="underline font-medium"
                 >
-                  hello@ommdocumentation.com
+                  omdocument33@gmail.com
                 </a>
                 . We are happy to help!
               </p>

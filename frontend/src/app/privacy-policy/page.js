@@ -119,7 +119,7 @@ export default function Page() {
             <li>Withdraw consent where processing is based on consent</li>
           </ul>
           <p className="mt-4 text-gray-700">
-            Requests may be submitted to <strong>hello@ommdocumentation.com</strong>.
+            Requests may be submitted to <strong>omdocument33@gmail.com</strong>.
             Certain requests may be limited due to legal or regulatory obligations.
           </p>
         </section>
@@ -168,7 +168,7 @@ export default function Page() {
             please contact us at:
           </p>
           <p className="mt-2 font-semibold text-gray-900">
-            hello@ommdocumentation.com
+            omdocument33@gmail.com
           </p>
           <p className="mt-2 text-gray-600">
             We typically respond within 3–5 working days.

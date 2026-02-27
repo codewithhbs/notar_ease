@@ -163,7 +163,7 @@ export default function Page() {
             For any questions or concerns regarding these Terms, please contact us at:
           </p>
           <p className="mt-2 font-semibold text-gray-900">
-            hello@ommdocumentation.com
+            omdocument33@gmail.com
           </p>
         </section>
 
