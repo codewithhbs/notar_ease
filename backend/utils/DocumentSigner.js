@@ -54,9 +54,9 @@ function getPositionCoordinates(position) {
         "middle-center": { Left: 246, Top: 451, Width: 366, Height: 376 },
         "middle-right": { Left: 468, Top: 451, Width: 588, Height: 376 },
 
-        "bottom-left": { Left: 8, Top: 102, Width: 128, Height: 14 },
+        "bottom-left": { Left: 2, Top: 71, Width: 111, Height: 4 },
         "bottom-center": { Left: 210, Top: 144, Width: 346, Height: 52 },
-        "bottom-right": { Left: 380, Top: 112, Width: 500, Height: 26 },
+        "bottom-right": { Left: 340, Top: 72, Width: 449, Height: 4 },
     };
 
     return map[position] || map["bottom-right"];
@@ -68,12 +68,12 @@ function getManualAdjustments(position, count) {
     const manualAdjustMap = {
 
         "bottom-left": [
-            { leftShift: 8, width: 128, height: 14, topShift: 102 }, //bottom left
-            { leftShift: 140, width: 260, height: 14, topShift: 102 }, //bottom right
-            { leftShift: 10, width: 130, height: 109, topShift: 197 }, //bottom up left
-            { leftShift: 140, width: 260, height: 109, topShift: 197 }, // bottom up right
-            // { leftShift: 129, width: 233, height: 25, topShift: 103 },
-            // { leftShift: 239, width: 343, height: 25, topShift: 103 },
+            { leftShift: 2, width: 111, height: 4, topShift: 71 }, // 1st sign
+            { leftShift: 117, width: 226, height: 4, topShift: 71 }, // 2nd sign
+            { leftShift: 230, width: 339, height: 4, topShift: 71 }, // 3rd sign
+            { leftShift: 2, width: 111, height: 74, topShift: 141 }, // 4th sign
+            { leftShift: 116, width: 225, height: 74, topShift: 141 }, // 5th sign
+            { leftShift: 230, width: 339, height: 74, topShift: 141 }, // 6th sign
         ],
 
         "bottom-center": [
@@ -82,7 +82,7 @@ function getManualAdjustments(position, count) {
         ],
 
         "bottom-right": [
-            { leftShift: 0, width: 541, height: 69, topShift: 0 },
+            { leftShift: 340, width: 449, height: 5, topShift: 72 }, // fixed single position
             { leftShift: 560, width: 200, height: 69, topShift: 0 },
         ],
 
@@ -172,8 +172,8 @@ async function buildSigningPayload(meeting) {
             let adjustedHeight = basePos.Height;
 
             if (manual) {
-                adjustedLeft = basePos.Left + manual.leftShift;
-                adjustedTop = basePos.Top + manual.topShift;
+                adjustedLeft = manual.leftShift;   // ✅ fixed absolute coordinates
+                adjustedTop = manual.topShift;     // ✅ fixed absolute coordinates
                 adjustedWidth = manual.width;
                 adjustedHeight = manual.height;
             }
@@ -192,6 +192,7 @@ async function buildSigningPayload(meeting) {
 
         });
     });
+    
 
     const base64PDF = Buffer.from(pdfRes.data).toString("base64");
 

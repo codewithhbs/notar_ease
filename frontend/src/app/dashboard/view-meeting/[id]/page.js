@@ -162,15 +162,43 @@ const Page = () => {
   }
 
   const handleStamp = async () => {
-    try {
-      toast.loading('Stamping...', { toastId: 'stamp' })
-      await api.post(`/api/meeting/sign-document-for-notary/${id}`)
-      toast.update('stamp', { render: 'Meeting stamped', type: 'success', isLoading: false })
-    } catch (err) {
-      console.log("Internal server error", err)
-      toast.update('stamp', { render: err.response?.data?.message || 'Stamp failed', type: 'error', isLoading: false })
+  try {
+    toast.loading('Stamping...', { toastId: 'stamp' });
+
+    // Step 1: Download report
+    const downloadReport = await api.get(
+      `/api/meeting/download-final-report/${id}`
+    );
+
+    if (!downloadReport?.data) {
+      throw new Error('Report download failed');
     }
+
+    // Step 2: Sign document
+    const signRes = await api.post(
+      `/api/meeting/sign-document-for-notary/${id}`
+    );
+
+    if (signRes?.data?.success) {
+      toast.update('stamp', {
+        render: 'Meeting stamped successfully ✅',
+        type: 'success',
+        isLoading: false,
+      });
+    } else {
+      throw new Error(signRes?.data?.message || 'Signing failed');
+    }
+
+  } catch (err) {
+    console.error("Internal server error", err);
+
+    toast.update('stamp', {
+      render: err?.response?.data?.message || err.message || 'Stamp failed ❌',
+      type: 'error',
+      isLoading: false,
+    });
   }
+};
 
   if (loading || !meeting || !user) {
     return (

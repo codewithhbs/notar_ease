@@ -66,5 +66,6 @@ router.post("/send-document-for-sign/:id", authenticateAccessToken, meetingContr
 router.post("/adv-sign-detail/:id", meetingController.advSignDetail);
 router.post("/sign-document-for-notary/:id", meetingController.doStampDuty);
 router.post("/final-report", meetingController.finalReport);
+router.get("/download-final-report/:id", meetingController.downloadFinalReport);
 
 module.exports = router;                

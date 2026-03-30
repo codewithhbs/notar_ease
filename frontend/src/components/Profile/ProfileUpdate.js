@@ -161,7 +161,7 @@ const ProfileUpdate = () => {
           </div>
         </SectionCard>
 
-        {/* ── Notary Details ── */}
+        {/* ── Notary Details ── */}. 
         {role === "notary" && (
           <SectionCard title="Notary Details" icon={Shield} accent>
             <div className="space-y-4">

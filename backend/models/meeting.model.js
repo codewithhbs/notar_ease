@@ -195,6 +195,10 @@ const meetingSchema = new mongoose.Schema({
     public_id: {
       type: String,
     },
+  },
+  allSignDoneByClient: {
+    type: Boolean,
+    default: false,
   }
 
 }, { timestamps: true });
