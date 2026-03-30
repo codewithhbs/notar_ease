@@ -192,7 +192,7 @@ async function buildSigningPayload(meeting) {
 
         });
     });
-    
+
 
     const base64PDF = Buffer.from(pdfRes.data).toString("base64");
 
@@ -231,6 +231,7 @@ async function initiateDocumentSigning(meeting) {
         return res.data;
     } catch (err) {
         if (
+            err.response?.status === 440 ||
             err.response?.data?.Message?.includes("Token Expired")
         ) {
             token = await generateAuthToken();
@@ -309,14 +310,14 @@ async function downloadSignedDocument(workflowId) {
         };
 
     } catch (err) {
-        console.log("⚠️ First attempt failed", err);
+        console.log("⚠️ First attempt failed", err.response?.status, err.response?.data);
 
-        // 🔁 Token Expired Case
+        // 🔁 Handle BOTH cases
         if (
-            err.response?.data?.Message &&
-            err.response.data.Message.includes("Token Expired")
+            err.response?.status === 440 ||
+            err.response?.data?.Message?.includes("Token Expired")
         ) {
-            console.log("🔁 Token expired. Generating new token...");
+            console.log("🔁 Token expired or session timeout. Generating new token...");
 
             token = await generateAuthToken();
 
@@ -351,7 +352,7 @@ async function downloadSignedDocument(workflowId) {
     }
 }
 
-module.exports = {
-    initiateDocumentSigning,
-    downloadSignedDocument
-};
+    module.exports = {
+        initiateDocumentSigning,
+        downloadSignedDocument
+    };
