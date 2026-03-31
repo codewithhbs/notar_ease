@@ -19,11 +19,11 @@ const sendEmail = require("../utils/SendEmail");
 function getStampPosition(page, position, stampWidth, stampHeight) {
   const { width, height } = page.getSize();
   const margin = 0;
-  const bottom = 13;
+  // const bottom = 13;
 
   switch (position) {
     case "bottom-right":
-      return { x: width - stampWidth - margin, y: bottom };
+      return { x: width - stampWidth - margin, y: margin };
     case "bottom-left":
       return { x: margin, y: margin };
     case "top-right":
@@ -1350,7 +1350,8 @@ async function doStampDuty(req, res) {
       signatories.length
     );
 
-    const recipients = signatories.slice(0, -1);
+    // const recipients = signatories.slice(0, -1);
+    const recipients = signatories;
 
     console.log(
       "📧 Mail will be sent to:",

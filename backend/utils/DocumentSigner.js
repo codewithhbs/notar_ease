@@ -82,7 +82,7 @@ function getManualAdjustments(position, count) {
         ],
 
         "bottom-right": [
-            { leftShift: 340, width: 449, height: 5, topShift: 72 }, // fixed single position
+            { leftShift: 353, width: 462, height: 5, topShift: 72 }, // fixed single position
             { leftShift: 560, width: 200, height: 69, topShift: 0 },
         ],
 
