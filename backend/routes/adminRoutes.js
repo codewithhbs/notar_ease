@@ -53,5 +53,6 @@ router.get("/get-all-meetings", authenticateAccessToken, authorizeRoles("admin")
 router.delete("/delete-meeting/:id", authenticateAccessToken, authorizeRoles("admin"), adminController.deleteMeeting)
 router.get("/get-meeting/:id", adminController.getMeetingDetails)
 router.get("/get-signed-document/:id", adminController.getSignedDocument)
+router.put("/update-payment-details/:id", authenticateAccessToken, authorizeRoles("admin"), adminController.updatePaymentDetails)
 
 module.exports = router;

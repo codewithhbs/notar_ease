@@ -49,6 +49,7 @@ for (let i = 0; i < MAX_SIGNATORIES; i++) {
 
 router.post(
   "/create",
+  authenticateAccessToken,
   upload.fields(dynamicFields),
   meetingController.createMeeting
 );

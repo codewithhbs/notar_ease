@@ -11,7 +11,13 @@ import {
   CButton,
   CListGroup,
   CListGroupItem,
+  CFormSelect,
+  CFormInput,
+  CFormLabel,
 } from "@coreui/react";
+import toast from "react-hot-toast";
+
+const PAYMENT_STATUS_OPTIONS = ["pending", "success", "failed", "refunded"];
 
 const MeetingDetails = () => {
   const { id } = useParams();
@@ -19,12 +25,22 @@ const MeetingDetails = () => {
 
   const [meeting, setMeeting] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // editable payment fields
+  const [paymentStatus, setPaymentStatus] = useState("pending");
+  const [transactionId, setTransactionId] = useState("");
+  const [paidAt, setPaidAt] = useState("");
 
   const fetchMeetingDetails = async () => {
     try {
       setLoading(true);
       const res = await api.get(`/api/admin/get-meeting/${id}`);
-      setMeeting(res.data.meeting);
+      const m = res.data.meeting;
+      setMeeting(m);
+      setPaymentStatus(m.payment?.status || "pending");
+      setTransactionId(m.payment?.transactionId || "");
+      setPaidAt(m.payment?.paidAt ? m.payment.paidAt.slice(0, 10) : "");
     } catch (error) {
       console.log("Error fetching meeting details", error);
     } finally {
@@ -35,6 +51,25 @@ const MeetingDetails = () => {
   useEffect(() => {
     fetchMeetingDetails();
   }, [id]);
+
+  const handleUpdatePayment = async () => {
+    try {
+      setSaving(true);
+      const res = await api.put(`/api/admin/update-payment-details/${id}`, {
+        paymentStatus,
+        transactionId,
+        paidAt: paidAt || undefined,
+      });
+      toast.success(res.data.message || "Payment updated");
+      // setMeeting(res.data.meeting || meeting);
+      fetchMeetingDetails(); // Refresh meeting details after update
+    } catch (error) {
+      console.log("Error updating payment", error);
+      toast.error(error?.response?.data?.message || "Failed to update payment");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -127,12 +162,37 @@ const MeetingDetails = () => {
               <h5>Payment</h5>
               <p><strong>Amount:</strong> ₹{meeting.amount} {meeting.currency}</p>
               <p><strong>Method:</strong> {meeting.payment?.method}</p>
-              <p><strong>Status:</strong> 
-                <CBadge className="ms-2" color="success">
-                  {meeting.payment?.status}
-                </CBadge>
-              </p>
-              <p><strong>Transaction ID:</strong> {meeting.payment?.transactionId}</p>
+
+              <CFormLabel className="mt-2">Payment Status</CFormLabel>
+              <CFormSelect
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value)}
+                className="mb-2"
+              >
+                {PAYMENT_STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </CFormSelect>
+
+              <CFormLabel>Transaction ID</CFormLabel>
+              <CFormInput
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="razorpay payment id"
+                className="mb-2"
+              />
+
+              <CFormLabel>Paid At</CFormLabel>
+              <CFormInput
+                type="date"
+                value={paidAt}
+                onChange={(e) => setPaidAt(e.target.value)}
+                className="mb-3"
+              />
+
+              <CButton color="success" size="sm" disabled={saving} onClick={handleUpdatePayment}>
+                {saving ? "Saving..." : "Save Payment Details"}
+              </CButton>
             </CCardBody>
           </CCard>
         </CCol>

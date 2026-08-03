@@ -44,6 +44,12 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'Create Meeting',
+    to: '/meetings/create-meeting',
+    icon: <CIcon icon={cilImage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'Demo Meetings',
     to: '/meetings/all-demo-meetings',
     icon: <CIcon icon={cilImage} customClassName="nav-icon" />,

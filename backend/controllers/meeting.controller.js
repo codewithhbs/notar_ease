@@ -80,7 +80,7 @@ function parsePageNo(pageNo) {
 async function createMeeting(req, res) {
   try {
     const {
-      userId,
+      userId: bodyUserId,
       meetingTitle,
       meetingDescription,
       signatories,
@@ -91,6 +91,21 @@ async function createMeeting(req, res) {
       electronicSignatureCheckbox,
       agreedToTermsCheckbox,
     } = req.body;
+
+    // 🔒 Never trust a client-supplied userId blindly - that lets anyone
+    // create meetings (and rack up bills) under someone else's account.
+    // Only an authenticated admin may create a meeting on behalf of another
+    // user by passing userId explicitly; everyone else is locked to their
+    // own token identity.
+    const isAdmin = req.user?.role?.toLowerCase() === "admin";
+    const userId = isAdmin && bodyUserId ? bodyUserId : req.user?.sub;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
 
     /* =========================
        BOOLEAN NORMALIZATION
@@ -514,7 +529,7 @@ async function checkStatus(req, res) {
       return res.status(400).json({
         success: false,
         message: "Payment verification failed",
-        redirectUrl: `http://localhost:3000/payment-failed?order_id=${razorpay_order_id}`,
+        redirectUrl: `https://www.ommdocumentation.com/payment-failed?order_id=${razorpay_order_id}`,
       });
     }
 
@@ -530,7 +545,7 @@ async function checkStatus(req, res) {
 
     console.log("✅ Meeting payment marked as PAID");
 
-    const successRedirect = `http://localhost:3000/Receipt/order-confirmed?id=${meeting._id}&success=true`;
+    const successRedirect = `https://www.ommdocumentation.com/Receipt/order-confirmed?id=${meeting._id}&success=true`;
 
     return res.status(200).json({
       success: true,
@@ -544,6 +559,87 @@ async function checkStatus(req, res) {
       success: false,
       message: "Internal Server Error",
     });
+  }
+}
+
+// 🔔 Razorpay Webhook - server-to-server payment confirmation.
+// Client-side "handler" callback can miss firing (UPI app-switch, tab killed
+// by mobile OS, network drop, user closes browser right after paying).
+// Webhook is Razorpay's own server calling us directly, so it doesn't
+// depend on the user's browser at all - this is what actually fixes
+// "payment done but next step didn't come" for good.
+async function razorpayWebhook(req, res) {
+  console.log("🔔 Razorpay webhook HIT");
+  console.log("Webhook HIT");
+  // console.log(req.headers);
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers["x-razorpay-signature"];
+
+    if (!webhookSecret) {
+      console.error("🔥 RAZORPAY_WEBHOOK_SECRET not set in env");
+      return res.status(500).json({ success: false, message: "Webhook not configured" });
+    }
+
+    if (!signature) {
+      return res.status(400).json({ success: false, message: "Missing signature" });
+    }
+
+    // req.body here MUST be the raw buffer (see server.js route setup)
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(req.body)
+      .digest("hex");
+
+    if (expectedSignature !== signature) {
+      console.warn("⚠️ Razorpay webhook: invalid signature, ignoring");
+      return res.status(400).json({ success: false, message: "Invalid signature" });
+    }
+
+    const event = JSON.parse(req.body.toString("utf8"));
+    console.log("🔔 Razorpay webhook event:", event.event);
+
+    const paymentEntity = event?.payload?.payment?.entity;
+    const orderId = paymentEntity?.order_id;
+
+    if (!orderId) {
+      // Nothing actionable (e.g. other event types) - ack so Razorpay stops retrying
+      return res.status(200).json({ success: true });
+    }
+
+    const meeting = await Meeting.findOne({ "payment.razorpayOrderId": orderId });
+
+    if (!meeting) {
+      console.warn("⚠️ Webhook: no meeting found for order", orderId);
+      return res.status(200).json({ success: true });
+    }
+
+    if (event.event === "payment.captured" || event.event === "order.paid") {
+      if (!meeting.isPaid) {
+        meeting.payment.transactionId = paymentEntity.id;
+        meeting.payment.status = "success";
+        meeting.payment.paidAt = new Date();
+        meeting.isPaid = true;
+        meeting.status = "paid";
+        await meeting.save();
+        console.log("✅ Webhook: meeting marked PAID:", meeting._id);
+      }
+    } else if (event.event === "payment.failed") {
+      if (!meeting.isPaid) {
+        meeting.payment.transactionId = paymentEntity.id;
+        meeting.payment.status = "failed";
+        meeting.status = "payment_failed";
+        await meeting.save();
+        console.log("❌ Webhook: meeting marked FAILED:", meeting._id);
+      }
+    }
+
+    // Always 200 quickly, else Razorpay keeps retrying the same event
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("🔥 ERROR in razorpayWebhook:", error);
+    // still 200 to avoid endless retries on our own bug; error is logged
+    return res.status(200).json({ success: false });
   }
 }
 
@@ -1903,10 +1999,13 @@ async function downloadFinalReport(req, res) {
   }
 }
 
+
+
 module.exports = {
   createMeeting,
   createPayment,
   checkStatus,
+  razorpayWebhook,
   updateTimeSlot,
   joinMeeting,
   getMeetingByUserAndAdvocate,

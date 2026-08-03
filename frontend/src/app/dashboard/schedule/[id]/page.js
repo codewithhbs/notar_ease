@@ -9,6 +9,7 @@ const Page = () => {
   const { id } = useParams()
 
   const [step, setStep] = useState(1)
+  const [checkingMeeting, setCheckingMeeting] = useState(true)
   const [timeSlots, setTimeSlots] = useState([])
   const [groupedSlots, setGroupedSlots] = useState({})
   const [selectedSlot, setSelectedSlot] = useState(null)
@@ -23,6 +24,50 @@ const Page = () => {
     document.body.appendChild(script)
     return () => document.body.removeChild(script)
   }, [])
+
+  /* ================== CHECK ACTUAL MEETING STATUS ON LOAD ==================
+     Without this, `step` always starts at 1 (Payment) even if the meeting is
+     already paid - e.g. after a UPI payment where the browser tab gets
+     paused/reloaded mid app-switch and the Razorpay success handler never
+     fires. Money is deducted, DB gets updated by the webhook, but the user
+     lands back here and sees "Pay & Continue" again, which looks like it's
+     asking them to pay a second time even though it isn't. */
+  useEffect(() => {
+    const checkMeetingStatus = async () => {
+      try {
+        const res = await api.get(`/api/meeting/get-meeting/${id}`)
+        const meeting = res.data.meeting
+
+        if (meeting?.isPaid) {
+          if (meeting.advocateId) {
+            // already fully booked, nothing left to do here
+            window.location.href = `/dashboard/view-meeting/${id}`
+            return
+          } else if (meeting.timeSlotId) {
+            setSelectedSlot(meeting.timeSlotId)
+            setStep(2)
+            await fetchSlots()
+            const slotRes = await api.post('/api/advocate/check-slot', {
+              date: meeting.timeSlotId.date,
+              startTime: meeting.timeSlotId.startTime,
+              endTime: meeting.timeSlotId.endTime,
+            })
+            setAvailableAdvocates(slotRes.data.timeSlots)
+          } else {
+            setStep(2)
+            await fetchSlots()
+          }
+        }
+      } catch (error) {
+        console.log("Could not verify meeting status", error)
+      } finally {
+        setCheckingMeeting(false)
+      }
+    }
+
+    checkMeetingStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   /* ================== FETCH SLOTS ================== */
   const fetchSlots = async () => {
@@ -180,6 +225,14 @@ const Page = () => {
     });
     window.location.href = `/dashboard/view-meeting/${id}`
   };
+
+  if (checkingMeeting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Checking your meeting status...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">

@@ -5,6 +5,7 @@ import AddAdvocate from './views/Advocate/AddAdvocate'
 import AdvocateDetails from './views/Advocate/AdvocateDetails'
 import AllMeetings from './views/Meetings/AllMeetings'
 import MeetingDetails from './views/Meetings/MeetingDetails'
+import CreateMeeting from './views/Meetings/CreateMeeting'
 import AdminTimeSlot from './views/AdminTimeSlot/AdminTimeSlot'
 import AddAdminTimeSlot from './views/AdminTimeSlot/AddAdminAdminSlot'
 import AllDemoMeetings from './views/DemoMeetings/AllDemoMeetings'
@@ -126,6 +127,7 @@ const routes = [
   
   // Meetings routes here
   { path: '/meetings/all-meetings', name: 'All Meetings', element: AllMeetings },
+  { path: '/meetings/create-meeting', name: 'Create Meeting', element: CreateMeeting },
   { path: '/meetings/meeting-detail/:id', name: 'Meeting Detail', element: MeetingDetails },
   
   // Admin Time Slot routes here

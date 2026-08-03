@@ -153,15 +153,17 @@ async function blockId(req, res) {
     }
 }
 
-async function getAllMeetings(res, res) {
+async function getAllMeetings(req, res) {
     try {
-        const meetings = await Meeting.find().populate("timeSlotId userId advocateId");
-        if (meetings.length === 0) {
-            return res.status(404).json({
-                success: true,
-                message: "No meetings found"
-            })
-        }
+        const { status, isPaid } = req.query;
+        const filter = {};
+        if (status) filter.status = status;
+        if (isPaid !== undefined) filter.isPaid = isPaid === "true";
+
+        const meetings = await Meeting.find(filter)
+            .populate("timeSlotId userId advocateId")
+            .sort({ createdAt: -1 });
+
         return res.status(200).json({
             success: true,
             meetings
@@ -268,6 +270,64 @@ async function getSignedDocument(req, res) {
     }
 }
 
+async function updatePaymentDetails(req, res) {
+    try {
+        const { id } = req.params;
+        const {
+            paymentStatus,   // "pending" | "success" | "failed" | "refunded"
+            transactionId,
+            paidAt,
+            amount,
+            meetingStatus,   // Meeting.status enum value, optional
+        } = req.body;
+
+        const meeting = await Meeting.findById(id);
+        if (!meeting) {
+            return res.status(404).json({ success: false, message: "Meeting not found" });
+        }
+
+        if (!meeting.payment) meeting.payment = {};
+
+        if (paymentStatus) {
+            meeting.payment.status = paymentStatus;
+            meeting.isPaid = paymentStatus === "success";
+        }
+
+        if (transactionId !== undefined) meeting.payment.transactionId = transactionId;
+
+        if (paidAt) {
+            meeting.payment.paidAt = new Date(paidAt);
+        } else if (paymentStatus === "success" && !meeting.payment.paidAt) {
+            meeting.payment.paidAt = new Date();
+        }
+
+        if (amount !== undefined) meeting.amount = amount;
+
+        if (meetingStatus) {
+            meeting.status = meetingStatus;
+        } else if (paymentStatus === "success") {
+            meeting.status = "paid";
+        } else if (paymentStatus === "failed") {
+            meeting.status = "payment_failed";
+        }
+
+        await meeting.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Payment details updated successfully",
+            meeting,
+        });
+    } catch (error) {
+        console.log("Internal server error", error)
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
 module.exports = {
     adminLogin,
     getUsers,
@@ -276,5 +336,6 @@ module.exports = {
     getAllMeetings,
     deleteMeeting,
     getMeetingDetails,
-    getSignedDocument
+    getSignedDocument,
+    updatePaymentDetails
 }

@@ -131,6 +131,14 @@ const AllMeetings = () => {
                     <option value="scheduled">Scheduled</option>
                     <option value="cancelled">Cancelled</option>
                 </CFormSelect>
+
+                <button
+                    className="btn btn-success ms-auto"
+                    style={{ whiteSpace: "nowrap" }}
+                    onClick={() => navigate("/meetings/create-meeting")}
+                >
+                    + Create Meeting
+                </button>
             </div>
 
             {/* 🌀 LOADING */}

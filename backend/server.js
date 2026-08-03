@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const advocateRoutes = require("./routes/advocateRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
+const meetingController = require("./controllers/meeting.controller");
 const meetingDemoRoutes = require("./routes/meetingDemoRoutes");
 const contactEnquiryRoutes = require("./routes/contactEnquiryRoute");
 require("./cron/meetingReminder.cron");
@@ -36,6 +37,15 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
+);
+
+// ⚠️ Razorpay webhook MUST use raw body (for signature verification) and
+// MUST be registered BEFORE express.json(), else body arrives pre-parsed
+// and the HMAC signature check will never match.
+app.post(
+  "/api/meeting/razorpay-webhook",
+  express.raw({ type: "application/json" }),
+  meetingController.razorpayWebhook
 );
 
 app.use(express.json());

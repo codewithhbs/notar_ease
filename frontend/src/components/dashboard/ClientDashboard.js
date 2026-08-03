@@ -2,7 +2,6 @@
 "use client";
 import { Home, Calendar, Video, User, LogOut, Menu } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
-import CreateMeetingModal from '../CreateMeetingModal/CreateMeetingModal'
 import MeetingsTab from '../MeetingsTab/MeetingsTab'
 import SlotsTab from '../SlotsTab/SlotsTab'
 import ProfileUpdate from '../Profile/ProfileUpdate'
@@ -19,7 +18,6 @@ const ClientDashboard = () => {
 
   const [activeTab, setActiveTab] = useState(tabFromUrl || "home");
 
-  const [modalOpen, setModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // const [me,setMe] = useState(JSON.parse(sessionStorage.getItem('user')));
@@ -301,11 +299,11 @@ const ClientDashboard = () => {
 
             {/* Tab Content */}
             {activeTab === "home" && (
-              <HomeTab onTabChange={handleTabChange} openMeetingModal={() => setModalOpen(true)} />
+              <HomeTab onTabChange={handleTabChange} openMeetingModal={() => router.push("/dashboard/create-meeting")} />
             )}
 
             {activeTab === "meetings" && (
-              <MeetingsTab openModal={() => setModalOpen(true)} />
+              <MeetingsTab openModal={() => router.push("/dashboard/create-meeting")} />
             )}
             {activeTab === "slots" && <SlotsTab />}
             {activeTab === "profile" && <ProfileUpdate />}
@@ -313,11 +311,6 @@ const ClientDashboard = () => {
           </main>
         </div>
       </div>
-
-      <CreateMeetingModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </div>
   )
 }
